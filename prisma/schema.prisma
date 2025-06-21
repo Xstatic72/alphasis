@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  AdmissionNumber String      @id @default(cuid())
+  FirstName       String
+  LastName        String
+  DateOfBirth     DateTime
+  Gender          String
+  ParentContact   String
+  Address         String
+  StudentClassID  String
+  Class           Class       @relation(fields: [StudentClassID], references: [ClassID])
+  Registration    Registration[]
+  Grade           Grade[]
+  Attendance      Attendance[]
+  Payment         Payment[]
+}
+
+model Class {
+  ClassID   String    @id @default(cuid())
+  ClassName String
+  Student   Student[]
+}
+
+model Subject {
+  SubjectID    String         @id @default(cuid())
+  SubjectName  String
+  ClassLevel   String
+  TeacherID    String
+  Teacher      Teacher        @relation(fields: [TeacherID], references: [TeacherID])
+  Registration Registration[]
+  Grade        Grade[]
+  Attendance   Attendance[]
+}
+
+model Registration {
+  RegistrationID String  @id @default(cuid())
+  Term           String
+  StudentID      String
+  SubjectID      String
+  Student        Student @relation(fields: [StudentID], references: [AdmissionNumber])
+  Subject        Subject @relation(fields: [SubjectID], references: [SubjectID])
+}
+
+model Grade {
+  GradeID    String  @id @default(cuid())
+  Term       String
+  CA         Float
+  Exam       Float
+  TotalScore Float
+  Grade      String
+  StudentID  String
+  SubjectID  String
+  Student    Student @relation(fields: [StudentID], references: [AdmissionNumber])
+  Subject    Subject @relation(fields: [SubjectID], references: [SubjectID])
+}
+
+model Attendance {
+  AttendanceID String   @id @default(cuid())
+  Date         DateTime
+  Status       String
+  StudentID    String
+  SubjectID    String
+  Student      Student  @relation(fields: [StudentID], references: [AdmissionNumber])
+  Subject      Subject  @relation(fields: [SubjectID], references: [SubjectID])
+}
+
+model Payment {
+  TransactionID    String   @id @default(cuid())
+  Amount           Float
+  PaymentDate      DateTime
+  PaymentMethod    String
+  Confirmation     Boolean
+  ReceiptGenerated Boolean
+  Term             String
+  StudentID        String
+  Student          Student  @relation(fields: [StudentID], references: [AdmissionNumber])
+}
+
+model Teacher {
+  TeacherID String    @id @default(cuid())
+  FirstName String
+  LastName  String
+  PhoneNum  String
+  Email     String    @unique
+  Subject   Subject[]
+}

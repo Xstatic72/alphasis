@@ -1,0 +1,128 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'aerospace-orange': {
+          DEFAULT: '#ff4e00',
+          50: '#fff5f2',
+          100: '#ffdbcc',
+          200: '#ffb899',
+          300: '#ff9466',
+          400: '#ff7033',
+          500: '#ff4e00',
+          600: '#cc3d00',
+          700: '#992e00',
+          800: '#661f00',
+          900: '#330f00',
+        },
+        'apple-green': {
+          DEFAULT: '#8ea604',
+          50: '#f8fcf1',
+          100: '#f4fdbc',
+          200: '#e8fc7a',
+          300: '#ddfa37',
+          400: '#c5e706',
+          500: '#8ea604',
+          600: '#708303',
+          700: '#546203',
+          800: '#384202',
+          900: '#1c2101',
+        },
+        'amber': {
+          DEFAULT: '#f5bb00',
+          50: '#fffbf0',
+          100: '#fff3ca',
+          200: '#ffe695',
+          300: '#ffda60',
+          400: '#ffcd2b',
+          500: '#f5bb00',
+          600: '#c49600',
+          700: '#937100',
+          800: '#624b00',
+          900: '#312600',
+        },
+        'gamboge': {
+          DEFAULT: '#ec9f05',
+          50: '#fefbf0',
+          100: '#feedca',
+          200: '#fdda95',
+          300: '#fcc860',
+          400: '#fbb52b',
+          500: '#ec9f05',
+          600: '#bc7f04',
+          700: '#8d5f03',
+          800: '#5e3f02',
+          900: '#2f2001',        },
+      },
+      fontFamily: {
+        sans: [
+          'var(--font-geist-sans)',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          '"Noto Sans"',
+          'sans-serif',
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+          '"Segoe UI Symbol"',
+          '"Noto Color Emoji"',
+        ],
+        mono: [
+          'var(--font-geist-mono)',
+          'ui-monospace',
+          'SFMono-Regular',
+          '"SF Mono"',
+          'Consolas',
+          '"Liberation Mono"',
+          'Menlo',
+          'monospace',
+        ],
+      },
+      animation: {
+        'gradient-shift': 'gradient-shift 3s ease infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2s infinite',
+        'slide-in-up': 'slide-in-up 0.5s ease-out',
+        'spin-slow': 'spin-slow 1s linear infinite',
+      },
+      keyframes: {
+        'gradient-shift': {
+          '0%, 100%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(255, 78, 0, 0.4)' },
+          '50%': { 'box-shadow': '0 0 0 10px rgba(255, 78, 0, 0)' },
+        },
+        'slide-in-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+} satisfies Config;
+
+export default config;
