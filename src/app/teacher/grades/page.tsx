@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardCheck, Plus, Edit, Search } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
+import { 
+  ClipboardCheck, 
+  Plus, 
+  Edit, 
+  Search, 
+  LogOut,
+  GraduationCap,
+  TrendingUp,
+  BarChart3,
+  Award,
+  ArrowLeft,
+  Home
+} from 'lucide-react';
 
 type Grade = {
   GradeID: string;
@@ -35,11 +48,11 @@ type GradesData = {
 export default function TeacherGradesPage() {
   const [data, setData] = useState<GradesData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);  const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('1st Term');
+  const router = useRouter();
   const [newGradeForm, setNewGradeForm] = useState({
     StudentID: '',
     SubjectID: '',
@@ -47,6 +60,18 @@ export default function TeacherGradesPage() {
     TotalScore: '',
     Grade: ''
   });
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/login');
+    }
+  };
 
   useEffect(() => {
     fetchGrades();
@@ -155,14 +180,11 @@ export default function TeacherGradesPage() {
       console.error('Error updating grade:', error);
     }
   };
-
   const filteredGrades = (data?.grades || []).filter(grade => {
-    const matchesSearch = `${grade.Student.FirstName} ${grade.Student.LastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         grade.Student.AdmissionNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSubject = !selectedSubject || grade.SubjectID === selectedSubject;
     const matchesTerm = grade.Term === selectedTerm;
     
-    return matchesSearch && matchesSubject && matchesTerm;
+    return matchesSubject && matchesTerm;
   });
 
   const gradeColumns = [
@@ -206,6 +228,26 @@ export default function TeacherGradesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="outline"
+            className="flex items-center gap-2 hover:bg-green-50 border-green-300"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Main Dashboard
+          </Button>
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="ghost"
+            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
+          >
+            <Home className="h-4 w-4" />
+            Teacher Home
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
@@ -221,21 +263,22 @@ export default function TeacherGradesPage() {
               Add Grade
             </Button>
           </div>
-        </div>
-
-        {/* Stats */}
+        </div>        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Grades</CardTitle>
+              <BarChart3 className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{(data?.grades || []).length}</div>
+              <p className="text-xs text-blue-100">Total recorded grades</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+              <TrendingUp className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -244,26 +287,31 @@ export default function TeacherGradesPage() {
                   : 0
                 }
               </div>
+              <p className="text-xs text-green-100">Class average</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">A Grades</CardTitle>
+              <Award className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {(data?.grades || []).filter(g => g.Grade.startsWith('A')).length}
               </div>
+              <p className="text-xs text-purple-100">Excellent performance</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Failed</CardTitle>
+              <GraduationCap className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {(data?.grades || []).filter(g => g.Grade === 'F').length}
               </div>
+              <p className="text-xs text-red-100">Need improvement</p>
             </CardContent>
           </Card>
         </div>
@@ -363,27 +411,18 @@ export default function TeacherGradesPage() {
               </form>
             </CardContent>
           </Card>
-        )}
-
-        {/* Filters */}
-        <Card>
+        )}        {/* Filters */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Filter Grades</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900">Filter Grades</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="flex items-center space-x-2">
-                <Search className="h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by student name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
+                <Label htmlFor="subject-filter" className="text-sm font-medium text-gray-700">Subject</Label>
                 <select
-                  className="w-full p-2 border rounded-md"
+                  id="subject-filter"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
                 >
@@ -396,8 +435,10 @@ export default function TeacherGradesPage() {
                 </select>
               </div>
               <div>
+                <Label htmlFor="term-filter" className="text-sm font-medium text-gray-700">Term</Label>
                 <select
-                  className="w-full p-2 border rounded-md"
+                  id="term-filter"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   value={selectedTerm}
                   onChange={(e) => setSelectedTerm(e.target.value)}
                 >
@@ -406,27 +447,34 @@ export default function TeacherGradesPage() {
                   <option value="3rd Term">3rd Term</option>
                 </select>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedSubject('');
-                  setSelectedTerm('1st Term');
-                }}
-              >
-                Clear Filters
-              </Button>
+              <div className="flex items-end">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-gray-50 hover:bg-gray-100"
+                  onClick={() => {
+                    setSelectedSubject('');
+                    setSelectedTerm('1st Term');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Grades Table */}
-        <Card>
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Grades List</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900">Grades List</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={gradeColumns} data={filteredGrades} />
+            <DataTable 
+              columns={gradeColumns} 
+              data={filteredGrades} 
+              searchColumn="Student.FirstName"
+              searchPlaceholder="Search by student name..."
+            />
           </CardContent>
         </Card>
       </div>

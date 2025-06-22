@@ -22,126 +22,129 @@ async function authenticate(request: NextRequest, allowedRoles: string[] = []) {
 export async function GET(request: NextRequest) {
   try {
     const session = await authenticate(request);
+    const { searchParams } = new URL(request.url);
     
-    if (session.role === 'TEACHER') {
-      // Get teacher's person and profile - using the working pattern from attendance API
-      const person = await prisma.person.findUnique({
-        where: { PersonID: session.userId },
-        include: {
-          teacher: true
+    if (session.role === 'TEACHER') {      // Get teacher using PersonID from session
+      const teacher = await prisma.teacher.findUnique({
+        where: { TeacherID: session.userId },
+        include: { 
+          person: true,
+          subject: true 
         }
       });
 
-      if (!person || !person.teacher) {
+      if (!teacher) {
         return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
-      }
-
-      // Get teacher's subjects
-      const subjects = await prisma.subject.findMany({
-        where: { TeacherID: person.teacher.TeacherID },
-        orderBy: { SubjectName: 'asc' }
-      });
-
-      // Get grades for all subjects taught by this teacher
-      const subjectIds = subjects.map(s => s.SubjectID);
+      }      // Get grades for all subjects taught by this teacher
+      const subjectIds = teacher.subject.map(s => s.SubjectID);
       const grades = await prisma.grade.findMany({
         where: { SubjectID: { in: subjectIds } },
         include: {
-          subject: true
+          student: {
+            include: {
+              parent: {
+                include: { person: true }
+              },
+              Renamedclass: true
+            }
+          },
+          subject: {
+            include: {
+              teacher: {
+                include: { person: true }
+              }
+            }
+          }
         },
         orderBy: [
           { Term: 'desc' }
         ]
       });
 
-      // Get all students for form dropdowns
-      const allStudents = await prisma.student.findMany({});      // Transform grades to include proper student names from Person table
-      const transformedGrades = await Promise.all(grades.map(async (grade) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
+      // Get all students for form dropdowns (with their names from Person table)
+      const allStudents = await prisma.student.findMany({
+        include: {
+          Renamedclass: true
+        }
+      });
 
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
-            },
-            Subject: {
-              SubjectName: grade.subject.SubjectName
-            }
-          };
-        } catch (error) {
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: '',
-              LastName: '',
-            },
-            Subject: {
-              SubjectName: grade.subject?.SubjectName || ''
-            }
-          };
+      // Get person data for students to get names
+      const studentPersons = await prisma.person.findMany({
+        where: {
+          PersonID: {
+            in: allStudents.map(s => s.AdmissionNumber)
+          }
         }
-      }));      // Transform students for dropdown - get names from Person table
-      const transformedStudents = await Promise.all(allStudents.map(async (student) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as any[];
-          
-          return {
-            AdmissionNumber: student.AdmissionNumber,
-            FirstName: studentPerson[0]?.FirstName || '',
-            LastName: studentPerson[0]?.LastName || '',
-          };
-        } catch (error) {
-          return {
-            AdmissionNumber: student.AdmissionNumber,
-            FirstName: '',
-            LastName: '',
-          };
-        }
+      });
+
+      const subjects = teacher.subject;
+
+      // Transform grades to include proper names from Person table
+      const transformedGrades = await Promise.all(grades.map(async (grade) => {
+        const studentPerson = await prisma.person.findUnique({
+          where: { PersonID: grade.student.AdmissionNumber }
+        });
+
+        return {
+          ...grade,
+          Student: {
+            AdmissionNumber: grade.student.AdmissionNumber,
+            FirstName: studentPerson?.FirstName || '',
+            LastName: studentPerson?.LastName || '',
+          },
+          Subject: {
+            SubjectName: grade.subject.SubjectName
+          }
+        };
       }));
+
+      // Transform students for dropdown
+      const transformedStudents = allStudents.map(student => {
+        const studentPerson = studentPersons.find(p => p.PersonID === student.AdmissionNumber);
+        return {
+          AdmissionNumber: student.AdmissionNumber,
+          FirstName: studentPerson?.FirstName || '',
+          LastName: studentPerson?.LastName || '',
+        };
+      });
 
       return NextResponse.json({ 
         grades: transformedGrades,
         students: transformedStudents,
         subjects 
       });
-    }
-
-    if (session.role === 'STUDENT') {
-      // Get student using PersonID from session
+    }    if (session.role === 'STUDENT') {
+      // Get student's grades using PersonID from session
       const student = await prisma.student.findUnique({
         where: { AdmissionNumber: session.userId }
       });
 
       if (!student) {
         return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
-      }
-
-      const grades = await prisma.grade.findMany({
+      }      const grades = await prisma.grade.findMany({
         where: { StudentID: student.AdmissionNumber },
         include: { 
-          subject: true
+          subject: {
+            include: {
+              teacher: {
+                include: { person: true }
+              }
+            }
+          }
         },
         orderBy: { Term: 'desc' }
-      });      // Transform grades to include proper subject names
+      });
+
+      // Transform grades to include proper subject names
       const transformedGrades = grades.map(grade => ({
         ...grade,
         Subject: {
-          SubjectName: grade.subject?.SubjectName || ''
+          SubjectName: grade.subject.SubjectName
         }
       }));
 
       return NextResponse.json({ grades: transformedGrades });
-    }
-
-    if (session.role === 'PARENT') {
+    }    if (session.role === 'PARENT') {
       // Get parent using PersonID from session
       const parent = await prisma.parent.findUnique({
         where: { ParentID: session.userId }
@@ -160,46 +163,31 @@ export async function GET(request: NextRequest) {
       const grades = await prisma.grade.findMany({
         where: { StudentID: { in: studentIds } },
         include: {
+          student: true,
           subject: true
         },
         orderBy: [
           { Term: 'desc' }
         ]
-      });      // Transform grades to include student names from Person table
+      });
+
+      // Transform grades to include student names from Person table
       const transformedGrades = await Promise.all(grades.map(async (grade) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
+        const studentPerson = await prisma.person.findUnique({
+          where: { PersonID: grade.student.AdmissionNumber }
+        });
 
-          const subjectInfo = await prisma.$queryRaw`
-            SELECT SubjectName FROM subject WHERE SubjectID = ${grade.SubjectID}
-          ` as any[];
-
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
-            },
-            Subject: {
-              SubjectName: subjectInfo[0]?.SubjectName || ''
-            }
-          };
-        } catch (error) {
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: '',
-              LastName: '',
-            },
-            Subject: {
-              SubjectName: ''
-            }
-          };
-        }
+        return {
+          ...grade,
+          Student: {
+            AdmissionNumber: grade.student.AdmissionNumber,
+            FirstName: studentPerson?.FirstName || '',
+            LastName: studentPerson?.LastName || '',
+          },
+          Subject: {
+            SubjectName: grade.subject.SubjectName
+          }
+        };
       }));
 
       return NextResponse.json({ grades: transformedGrades });
@@ -231,12 +219,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify teacher teaches this subject
-    const person = await prisma.person.findUnique({
-      where: { PersonID: session.userId },
-      include: { teacher: true }
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { teacherProfile: true }
     });
 
-    if (!person || !person.teacher) {
+    if (!user?.teacherProfile) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
@@ -244,28 +232,17 @@ export async function POST(request: NextRequest) {
       where: { SubjectID: gradeData.SubjectID }
     });
 
-    if (!subject || subject.TeacherID !== person.teacher.TeacherID) {
+    if (!subject || subject.TeacherID !== user.teacherProfile.TeacherID) {
       return NextResponse.json({ error: 'Access denied: You can only grade your own subjects' }, { status: 403 });
     }
 
-    // Generate unique GradeID
-    const gradeCount = await prisma.grade.count();
-    const gradeId = `G${(gradeCount + 1).toString().padStart(3, '0')}`;
-
     // Calculate grade based on total score
     let grade = 'F';
-    if (gradeData.TotalScore >= 90) grade = 'A+';
-    else if (gradeData.TotalScore >= 80) grade = 'A';
-    else if (gradeData.TotalScore >= 70) grade = 'B+';
-    else if (gradeData.TotalScore >= 60) grade = 'B';
-    else if (gradeData.TotalScore >= 50) grade = 'C+';
-    else if (gradeData.TotalScore >= 40) grade = 'C';
-    else if (gradeData.TotalScore >= 30) grade = 'D+';
-    else if (gradeData.TotalScore >= 20) grade = 'D';
-
-    const newGrade = await prisma.grade.create({
+    if (gradeData.TotalScore >= 90) grade = 'A';
+    else if (gradeData.TotalScore >= 80) grade = 'B';
+    else if (gradeData.TotalScore >= 70) grade = 'C';
+    else if (gradeData.TotalScore >= 60) grade = 'D';    const newGrade = await prisma.grade.create({
       data: {
-        GradeID: gradeId,
         StudentID: gradeData.StudentID,
         SubjectID: gradeData.SubjectID,
         Term: gradeData.Term,
@@ -275,7 +252,8 @@ export async function POST(request: NextRequest) {
         Grade: grade
       },
       include: {
-        subject: true
+        Student: true,
+        Subject: true
       }
     });
 
@@ -303,35 +281,31 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify teacher can update this grade
-    const person = await prisma.person.findUnique({
-      where: { PersonID: session.userId },
-      include: { teacher: true }
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { teacherProfile: true }
     });
 
-    if (!person || !person.teacher) {
+    if (!user?.teacherProfile) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
     const existingGrade = await prisma.grade.findUnique({
       where: { GradeID: gradeId },
-      include: { subject: true }
+      include: { Subject: true }
     });
 
-    if (!existingGrade || existingGrade.subject.TeacherID !== person.teacher.TeacherID) {
+    if (!existingGrade || existingGrade.Subject.TeacherID !== user.teacherProfile.TeacherID) {
       return NextResponse.json({ error: 'Grade not found or access denied' }, { status: 404 });
     }
 
     // Recalculate grade if TotalScore is updated
     if (updateData.TotalScore !== undefined) {
       let grade = 'F';
-      if (updateData.TotalScore >= 90) grade = 'A+';
-      else if (updateData.TotalScore >= 80) grade = 'A';
-      else if (updateData.TotalScore >= 70) grade = 'B+';
-      else if (updateData.TotalScore >= 60) grade = 'B';
-      else if (updateData.TotalScore >= 50) grade = 'C+';
-      else if (updateData.TotalScore >= 40) grade = 'C';
-      else if (updateData.TotalScore >= 30) grade = 'D+';
-      else if (updateData.TotalScore >= 20) grade = 'D';
+      if (updateData.TotalScore >= 90) grade = 'A';
+      else if (updateData.TotalScore >= 80) grade = 'B';
+      else if (updateData.TotalScore >= 70) grade = 'C';
+      else if (updateData.TotalScore >= 60) grade = 'D';
       updateData.Grade = grade;
     }
 
@@ -339,7 +313,8 @@ export async function PUT(request: NextRequest) {
       where: { GradeID: gradeId },
       data: updateData,
       include: {
-        subject: true
+        Student: true,
+        Subject: true
       }
     });
 
@@ -368,21 +343,21 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify teacher can delete this grade
-    const person = await prisma.person.findUnique({
-      where: { PersonID: session.userId },
-      include: { teacher: true }
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { teacherProfile: true }
     });
 
-    if (!person || !person.teacher) {
+    if (!user?.teacherProfile) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
     const existingGrade = await prisma.grade.findUnique({
       where: { GradeID: gradeId },
-      include: { subject: true }
+      include: { Subject: true }
     });
 
-    if (!existingGrade || existingGrade.subject.TeacherID !== person.teacher.TeacherID) {
+    if (!existingGrade || existingGrade.Subject.TeacherID !== user.teacherProfile.TeacherID) {
       return NextResponse.json({ error: 'Grade not found or access denied' }, { status: 404 });
     }
 

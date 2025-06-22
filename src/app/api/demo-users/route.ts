@@ -12,18 +12,29 @@ export async function GET() {
     const parents = await prisma.parent.findMany({
       take: 3,
       include: { person: true }
-    });
-
-    // Get students (those who have PersonIDs matching their AdmissionNumbers)
+    });    // Get students (those who have PersonIDs matching their AdmissionNumbers)
+    // Exclude ABS003 and ensure ABS022 is included
     const students = await prisma.student.findMany({
+      where: {
+        AdmissionNumber: {
+          not: 'ABS003'
+        }
+      },
       take: 3
     });
+
+    // Ensure ABS022 is included
+    const abs022Student = await prisma.student.findUnique({
+      where: { AdmissionNumber: 'ABS022' }
+    });
+
+    const allStudents = abs022Student ? [abs022Student, ...students.filter(s => s.AdmissionNumber !== 'ABS022')].slice(0, 3) : students;
 
     // Get corresponding persons for students
     const studentPersons = await prisma.person.findMany({
       where: {
         PersonID: {
-          in: students.map(s => s.AdmissionNumber)
+          in: allStudents.map(s => s.AdmissionNumber)
         }
       }
     });

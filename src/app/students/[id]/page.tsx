@@ -40,11 +40,37 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
     SELECT FirstName, LastName FROM person WHERE PersonID = ${id}
   ` as any[];
 
+  // Get parent information
+  let parentInfo = null;
+  if (student.ParentID) {
+    try {
+      const parentData = await prisma.parent.findUnique({
+        where: { ParentID: student.ParentID }
+      });
+      
+      if (parentData) {
+        const parentPerson = await prisma.$queryRaw`
+          SELECT FirstName, LastName FROM person WHERE PersonID = ${parentData.ParentID}
+        ` as any[];
+        
+        parentInfo = {
+          ...parentData,
+          FirstName: parentPerson[0]?.FirstName || '',
+          LastName: parentPerson[0]?.LastName || '',
+          FullName: parentPerson[0] ? `${parentPerson[0].FirstName} ${parentPerson[0].LastName}` : 'N/A'
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching parent info:', error);
+    }
+  }
+
   const studentData = {
     ...student,
     FirstName: person[0]?.FirstName || '',
     LastName: person[0]?.LastName || '',
-    Class: student.Renamedclass
+    Class: student.Renamedclass,
+    ParentInfo: parentInfo
   };
   return (
     <div className="min-h-full bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -124,8 +150,7 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                     </div>
                     <p className="text-gray-900 font-medium">{student.Address}</p>
                   </div>
-                  
-                  <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-2 md:col-span-2">
                     <div className="flex items-center space-x-2 text-gray-600 mb-1">
                       <Phone className="h-4 w-4" />
                       <span className="text-sm font-medium">Parent Contact</span>
@@ -135,6 +160,63 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                 </div>
               </div>
             </div>
+
+            {/* Parent Information */}
+            {studentData.ParentInfo && (
+              <div className="card-modern border-0 shadow-xl bg-gradient-to-br from-white via-blue-50 to-white overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5" />
+                <div className="relative p-8">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-6">
+                    Parent/Guardian Information
+                  </h2>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-gray-600 mb-1">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm font-medium">Parent Name</span>
+                      </div>
+                      <p className="text-gray-900 font-medium">{studentData.ParentInfo.FullName}</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-gray-600 mb-1">
+                        <Phone className="h-4 w-4" />
+                        <span className="text-sm font-medium">Contact Number</span>
+                      </div>
+                      <p className="text-gray-900 font-medium">{student.ParentContact}</p>
+                    </div>
+                    
+                    {studentData.ParentInfo.Occupation && (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2 text-gray-600 mb-1">
+                          <GraduationCap className="h-4 w-4" />
+                          <span className="text-sm font-medium">Occupation</span>
+                        </div>
+                        <p className="text-gray-900 font-medium">{studentData.ParentInfo.Occupation}</p>
+                      </div>
+                    )}
+                    
+                    {studentData.ParentInfo.Address && (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2 text-gray-600 mb-1">
+                          <MapPin className="h-4 w-4" />
+                          <span className="text-sm font-medium">Address</span>
+                        </div>
+                        <p className="text-gray-900 font-medium">{studentData.ParentInfo.Address}</p>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="flex items-center space-x-2 text-gray-600 mb-1">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm font-medium">Parent ID</span>
+                      </div>
+                      <p className="text-gray-900 font-medium">{studentData.ParentInfo.ParentID}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recent Payments Sidebar */}

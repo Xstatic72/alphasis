@@ -76,6 +76,26 @@ export async function POST(request: NextRequest) {
       existingStudent = await prisma.student.findUnique({
         where: { AdmissionNumber: studentId }
       });
+    }    // Validate that the StudentClassID exists
+    if (StudentClassID) {
+      const classExists = await prisma.renamedclass.findUnique({
+        where: { ClassID: StudentClassID }
+      });
+      
+      if (!classExists) {
+        return NextResponse.json({ 
+          error: `Class ID ${StudentClassID} does not exist. Please use a valid class ID.` 
+        }, { status: 400 });
+      }
+    }
+
+    // Get a default class if none provided
+    let defaultClassID = 'AB01';
+    if (!StudentClassID) {
+      const firstClass = await prisma.renamedclass.findFirst();
+      if (firstClass) {
+        defaultClassID = firstClass.ClassID;
+      }
     }
 
     // Create person record first
@@ -93,7 +113,7 @@ export async function POST(request: NextRequest) {
         AdmissionNumber: studentId,
         DateOfBirth: new Date(DateOfBirth),
         Gender: Gender === 'Male' ? 'M' : 'F',
-        StudentClassID: StudentClassID || 'AB01', // Default to AB01 if not provided
+        StudentClassID: StudentClassID || defaultClassID,
         ParentContact,
         Address
       },

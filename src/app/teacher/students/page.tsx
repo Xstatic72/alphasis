@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserPlus, Edit, Trash2, Search, LogOut } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, Search, LogOut, ArrowLeft, Home } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 
 type Student = {
@@ -177,10 +177,30 @@ export default function TeacherStudentsPage() {
   ];
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">        {/* Header */}
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="outline"
+            className="flex items-center gap-2 hover:bg-green-50 border-green-300"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="ghost"
+            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
+          >
+            <Home className="h-4 w-4" />
+            Teacher Home
+          </Button>
+        </div>
+
+        {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">

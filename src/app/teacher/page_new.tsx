@@ -16,8 +16,7 @@ import {
   TrendingUp,
   UserCheck,
   UserX,
-  BarChart3,
-  Home
+  BarChart3
 } from 'lucide-react';
 
 type TeacherData = {
@@ -76,7 +75,7 @@ export default function TeacherDashboard() {
     ? ((data.grades || []).reduce((sum: number, grade: any) => sum + grade.TotalScore, 0) / (data.grades || []).length).toFixed(1)
     : 'N/A';
   const attendanceRate = (data.attendance || []).length > 0 
-    ? Math.round(((data.attendance || []).filter((a: any) => a.Status === 'Present' || a.Status === 'PRESENT' || a.Status === '1').length / (data.attendance || []).length) * 100)
+    ? Math.round(((data.attendance || []).filter((a: any) => a.Status === 'Present').length / (data.attendance || []).length) * 100)
     : 0;
 
   // Define table columns
@@ -95,16 +94,17 @@ export default function TeacherDashboard() {
     },
     { accessorKey: "ParentContact", header: "Parent Contact" }
   ];
+
   const gradeColumns = [
     { 
-      accessorKey: "StudentName", 
+      accessorKey: "Student", 
       header: "Student",
-      cell: ({ row }: any) => row.original.StudentName || `${row.original.Student?.FirstName || ''} ${row.original.Student?.LastName || ''}`.trim() || 'N/A'
+      cell: ({ row }: any) => `${row.original.Student?.FirstName} ${row.original.Student?.LastName}`
     },
     { 
-      accessorKey: "SubjectName", 
+      accessorKey: "Subject", 
       header: "Subject",
-      cell: ({ row }: any) => row.original.SubjectName || row.original.Subject?.SubjectName || 'N/A'
+      cell: ({ row }: any) => row.original.Subject?.SubjectName || 'N/A'
     },
     { accessorKey: "Term", header: "Term" },
     { accessorKey: "CA", header: "CA Score" },
@@ -124,16 +124,17 @@ export default function TeacherDashboard() {
       )
     }
   ];
+
   const attendanceColumns = [
     { 
-      accessorKey: "StudentName", 
+      accessorKey: "Student", 
       header: "Student",
-      cell: ({ row }: any) => row.original.StudentName || `${row.original.Student?.FirstName || ''} ${row.original.Student?.LastName || ''}`.trim() || 'N/A'
+      cell: ({ row }: any) => `${row.original.Student?.FirstName} ${row.original.Student?.LastName}`
     },
     { 
-      accessorKey: "SubjectName", 
+      accessorKey: "Subject", 
       header: "Subject",
-      cell: ({ row }: any) => row.original.SubjectName || row.original.Subject?.SubjectName || 'N/A'
+      cell: ({ row }: any) => row.original.Subject?.SubjectName || 'N/A'
     },
     { 
       accessorKey: "Date", 
@@ -143,8 +144,9 @@ export default function TeacherDashboard() {
     { 
       accessorKey: "Status", 
       header: "Status",
-      cell: ({ row }: any) => (        <Badge variant={row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? 'default' : 'destructive'}>
-          {row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? (
+      cell: ({ row }: any) => (
+        <Badge variant={row.original.Status === 'Present' ? 'default' : 'destructive'}>
+          {row.original.Status === 'Present' ? (
             <>
               <UserCheck className="h-3 w-3 mr-1" />
               Present
@@ -347,11 +349,12 @@ export default function TeacherDashboard() {
               Recent Grades ({totalGrades})
             </CardTitle>
           </CardHeader>
-          <CardContent>            <DataTable 
+          <CardContent>
+            <DataTable 
               columns={gradeColumns} 
               data={(data.grades || []).slice(0, 10)} 
               searchPlaceholder="Search grades..."
-              searchColumn="StudentName"
+              searchColumn="Student.FirstName"
             />
             {totalGrades > 10 && (
               <div className="mt-4 text-center">
@@ -374,11 +377,12 @@ export default function TeacherDashboard() {
               Recent Attendance ({totalAttendance})
             </CardTitle>
           </CardHeader>
-          <CardContent>            <DataTable 
+          <CardContent>
+            <DataTable 
               columns={attendanceColumns} 
               data={(data.attendance || []).slice(0, 10)} 
               searchPlaceholder="Search attendance..."
-              searchColumn="StudentName"
+              searchColumn="Student.FirstName"
             />
             {totalAttendance > 10 && (
               <div className="mt-4 text-center">

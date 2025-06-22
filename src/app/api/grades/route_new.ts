@@ -55,56 +55,38 @@ export async function GET(request: NextRequest) {
       });
 
       // Get all students for form dropdowns
-      const allStudents = await prisma.student.findMany({});      // Transform grades to include proper student names from Person table
-      const transformedGrades = await Promise.all(grades.map(async (grade) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
+      const allStudents = await prisma.student.findMany({});
 
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
-            },
-            Subject: {
-              SubjectName: grade.subject.SubjectName
-            }
-          };
-        } catch (error) {
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: '',
-              LastName: '',
-            },
-            Subject: {
-              SubjectName: grade.subject?.SubjectName || ''
-            }
-          };
-        }
-      }));      // Transform students for dropdown - get names from Person table
+      // Transform grades to include proper student names from Person table
+      const transformedGrades = await Promise.all(grades.map(async (grade) => {
+        const studentPerson = await prisma.person.findUnique({
+          where: { PersonID: grade.StudentID }
+        });
+
+        return {
+          ...grade,
+          Student: {
+            AdmissionNumber: grade.StudentID,
+            FirstName: studentPerson?.FirstName || '',
+            LastName: studentPerson?.LastName || '',
+          },
+          Subject: {
+            SubjectName: grade.subject.SubjectName
+          }
+        };
+      }));
+
+      // Transform students for dropdown - get names from Person table
       const transformedStudents = await Promise.all(allStudents.map(async (student) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as any[];
-          
-          return {
-            AdmissionNumber: student.AdmissionNumber,
-            FirstName: studentPerson[0]?.FirstName || '',
-            LastName: studentPerson[0]?.LastName || '',
-          };
-        } catch (error) {
-          return {
-            AdmissionNumber: student.AdmissionNumber,
-            FirstName: '',
-            LastName: '',
-          };
-        }
+        const studentPerson = await prisma.person.findUnique({
+          where: { PersonID: student.AdmissionNumber }
+        });
+        
+        return {
+          AdmissionNumber: student.AdmissionNumber,
+          FirstName: studentPerson?.FirstName || '',
+          LastName: studentPerson?.LastName || '',
+        };
       }));
 
       return NextResponse.json({ 
@@ -130,11 +112,13 @@ export async function GET(request: NextRequest) {
           subject: true
         },
         orderBy: { Term: 'desc' }
-      });      // Transform grades to include proper subject names
+      });
+
+      // Transform grades to include proper subject names
       const transformedGrades = grades.map(grade => ({
         ...grade,
         Subject: {
-          SubjectName: grade.subject?.SubjectName || ''
+          SubjectName: grade.subject.SubjectName
         }
       }));
 
@@ -165,41 +149,25 @@ export async function GET(request: NextRequest) {
         orderBy: [
           { Term: 'desc' }
         ]
-      });      // Transform grades to include student names from Person table
+      });
+
+      // Transform grades to include student names from Person table
       const transformedGrades = await Promise.all(grades.map(async (grade) => {
-        try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
+        const studentPerson = await prisma.person.findUnique({
+          where: { PersonID: grade.StudentID }
+        });
 
-          const subjectInfo = await prisma.$queryRaw`
-            SELECT SubjectName FROM subject WHERE SubjectID = ${grade.SubjectID}
-          ` as any[];
-
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
-            },
-            Subject: {
-              SubjectName: subjectInfo[0]?.SubjectName || ''
-            }
-          };
-        } catch (error) {
-          return {
-            ...grade,
-            Student: {
-              AdmissionNumber: grade.StudentID,
-              FirstName: '',
-              LastName: '',
-            },
-            Subject: {
-              SubjectName: ''
-            }
-          };
-        }
+        return {
+          ...grade,
+          Student: {
+            AdmissionNumber: grade.StudentID,
+            FirstName: studentPerson?.FirstName || '',
+            LastName: studentPerson?.LastName || '',
+          },
+          Subject: {
+            SubjectName: grade.subject.SubjectName
+          }
+        };
       }));
 
       return NextResponse.json({ grades: transformedGrades });

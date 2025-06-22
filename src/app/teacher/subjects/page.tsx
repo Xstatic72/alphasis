@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Plus, Edit, Users } from 'lucide-react';
+import { BookOpen, Plus, Edit, Users, ArrowLeft, Home } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
+import { useRouter } from 'next/navigation';
 
 type Subject = {
   SubjectID: string;
@@ -130,10 +131,29 @@ export default function TeacherSubjectsPage() {
   ];
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="outline"
+            className="flex items-center gap-2 hover:bg-green-50 border-green-300"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="ghost"
+            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
+          >
+            <Home className="h-4 w-4" />
+            Teacher Home
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
@@ -149,34 +169,38 @@ export default function TeacherSubjectsPage() {
               Add Subject
             </Button>
           </div>
-        </div>
-
-        {/* Stats */}
+        </div>        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">My Subjects</CardTitle>
+              <BookOpen className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{(data?.subjects || []).length}</div>
+              <p className="text-xs text-blue-100">Subjects I teach</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
+              <Users className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{(data?.allSubjects || []).length}</div>
+              <p className="text-xs text-green-100">School-wide subjects</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Class Levels</CardTitle>
+              <Edit className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {new Set((data?.subjects || []).map(s => s.ClassLevel)).size}
               </div>
+              <p className="text-xs text-purple-100">Levels taught</p>
             </CardContent>
           </Card>
         </div>
@@ -242,28 +266,29 @@ export default function TeacherSubjectsPage() {
               </form>
             </CardContent>
           </Card>
-        )}
-
-        {/* My Subjects */}
-        <Card>
+        )}        {/* My Subjects */}
+        <Card className="bg-white rounded-xl shadow-lg border-0">
           <CardHeader>
-            <CardTitle>My Subjects</CardTitle>
+            <CardTitle className="text-gray-900">My Subjects</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={subjectColumns} data={data?.subjects || []} />
+            <DataTable 
+              columns={subjectColumns} 
+              data={data?.subjects || []} 
+              searchColumn="SubjectName"
+              searchPlaceholder="Search subjects..."
+            />
           </CardContent>
-        </Card>
-
-        {/* All Subjects (Read-only) */}
-        <Card>
+        </Card>        {/* All Subjects (Read-only) */}
+        <Card className="bg-white rounded-xl shadow-lg border-0">
           <CardHeader>
-            <CardTitle>All School Subjects</CardTitle>
+            <CardTitle className="text-gray-900">All School Subjects</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(data?.allSubjects || []).map((subject) => (
-                <div key={subject.SubjectID} className="border rounded-lg p-4 space-y-2">
-                  <h3 className="font-semibold text-lg">{subject.SubjectName}</h3>
+                <div key={subject.SubjectID} className="border border-gray-200 rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
+                  <h3 className="font-semibold text-lg text-gray-900">{subject.SubjectName}</h3>
                   <p className="text-sm text-gray-600">Level: {subject.ClassLevel}</p>
                   <p className="text-sm text-gray-500">
                     Teacher: {subject.Teacher.FirstName} {subject.Teacher.LastName}

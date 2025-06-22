@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DataTable } from '@/components/ui/data-table';
-import { Calendar, UserCheck, UserX, Users, CheckCircle, XCircle, LogOut } from 'lucide-react';
+import { Calendar, UserCheck, UserX, Users, CheckCircle, XCircle, LogOut, ArrowLeft, Home } from 'lucide-react';
 
 type AttendanceRecord = {
   AttendanceID: string;
@@ -138,9 +138,8 @@ export default function TeacherAttendancePage() {
     { 
       accessorKey: "Status", 
       header: "Status",
-      cell: ({ row }: any) => (
-        <Badge variant={row.original.Status === 'Present' ? 'default' : 'destructive'}>
-          {row.original.Status === 'Present' ? (
+      cell: ({ row }: any) => (        <Badge variant={row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? 'default' : 'destructive'}>
+          {row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? (
             <>
               <CheckCircle className="h-3 w-3 mr-1" />
               Present
@@ -161,6 +160,26 @@ export default function TeacherAttendancePage() {
   }  return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="outline"
+            className="flex items-center gap-2 hover:bg-blue-50 border-blue-300"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Main Dashboard
+          </Button>
+          <Button 
+            onClick={() => router.push('/teacher')}
+            variant="ghost"
+            className="flex items-center gap-2 text-blue-700 hover:bg-blue-50"
+          >
+            <Home className="h-4 w-4" />
+            Teacher Home
+          </Button>
+        </div>
+
         {/* Enhanced Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
@@ -240,7 +259,7 @@ export default function TeacherAttendancePage() {
                     <div className="flex items-center gap-4 text-sm font-semibold">
                       <div className="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-lg">
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span className="text-green-800">Present: {getTodayAttendance().filter(r => r.Status === 'Present').length}</span>
+                        <span className="text-green-800">Present: {getTodayAttendance().filter(r => r.Status === 'Present' || r.Status === 'PRESENT' || r.Status === '1').length}</span>
                       </div>
                       <div className="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-lg">
                         <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -273,12 +292,11 @@ export default function TeacherAttendancePage() {
 
                           <div className="flex items-center space-x-3">
                             {attendanceStatus ? (
-                              <div className="flex items-center gap-3">
-                                <Badge 
-                                  variant={attendanceStatus.Status === 'Present' ? 'default' : 'destructive'}
+                              <div className="flex items-center gap-3">                                <Badge 
+                                  variant={attendanceStatus.Status === 'Present' || attendanceStatus.Status === 'PRESENT' || attendanceStatus.Status === '1' ? 'default' : 'destructive'}
                                   className="px-3 py-1"
                                 >
-                                  {attendanceStatus.Status === 'Present' ? (
+                                  {attendanceStatus.Status === 'Present' || attendanceStatus.Status === 'PRESENT' || attendanceStatus.Status === '1' ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />
                                       Present
@@ -295,7 +313,7 @@ export default function TeacherAttendancePage() {
                                   variant="outline"
                                   className="text-xs"
                                   onClick={() => {
-                                    const newStatus = attendanceStatus.Status === 'Present' ? 'Absent' : 'Present';
+                                    const newStatus = (attendanceStatus.Status === 'Present' || attendanceStatus.Status === 'PRESENT' || attendanceStatus.Status === '1') ? 'Absent' : 'Present';
                                     handleMarkAttendance(student.AdmissionNumber, newStatus);
                                   }}
                                 >
@@ -406,7 +424,7 @@ export default function TeacherAttendancePage() {
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Present Today</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {getTodayAttendance().filter(r => r.Status === 'Present').length}
+                    {getTodayAttendance().filter(r => r.Status === 'Present' || r.Status === 'PRESENT' || r.Status === '1').length}
                   </p>
                   <p className="text-xs text-gray-500">
                     Out of {getTodayAttendance().length} marked
@@ -451,6 +469,194 @@ export default function TeacherAttendancePage() {
               searchPlaceholder="Search by student name..."
               searchColumn="Student.FirstName"
             />
+          </CardContent>
+        </Card>
+
+        {/* Attendance Reports Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UserCheck className="mr-2 h-5 w-5" />
+              Attendance Reports
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Report Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <Label htmlFor="reportDate">Report Date Range</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <Input
+                      type="date"
+                      defaultValue={new Date().toISOString().split('T')[0]}
+                      className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="reportSubject">Subject Filter</Label>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Subjects</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.SubjectID} value={subject.SubjectID}>
+                        {subject.SubjectName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Generate Report
+                  </Button>
+                </div>
+              </div>
+
+              {/* Attendance Summary by Student */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Attendance Summary by Student</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {students.slice(0, 10).map((student) => {
+                        const studentAttendance = attendanceRecords.filter(record => 
+                          record.Student.AdmissionNumber === student.AdmissionNumber &&
+                          (!selectedSubject || record.Subject.SubjectID === selectedSubject)
+                        );
+                        const presentCount = studentAttendance.filter(record => record.Status === 'Present' || record.Status === 'PRESENT' || record.Status === '1').length;
+                        const totalCount = studentAttendance.length;
+                        const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+                          return (
+                          <div key={student.AdmissionNumber} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                                {student.FirstName.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800">{student.FirstName} {student.LastName}</p>
+                                <p className="text-sm text-gray-600">{student.AdmissionNumber}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="text-right">
+                                <p className="font-semibold text-gray-800">{presentCount}/{totalCount}</p>
+                                <p className="text-sm text-gray-600">Present/Total</p>
+                              </div>
+                              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                attendanceRate >= 80 ? 'bg-green-100 text-green-800' :
+                                attendanceRate >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {attendanceRate}%
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Attendance Summary by Subject</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {subjects.map((subject) => {
+                        const subjectAttendance = attendanceRecords.filter(record => 
+                          record.Subject.SubjectID === subject.SubjectID
+                        );
+                        const presentCount = subjectAttendance.filter(record => record.Status === 'Present' || record.Status === 'PRESENT' || record.Status === '1').length;
+                        const totalCount = subjectAttendance.length;
+                        const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+                        
+                        return (
+                          <div key={subject.SubjectID} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium text-gray-800">{subject.SubjectName}</p>
+                              <p className="text-sm text-gray-600">Subject ID: {subject.SubjectID}</p>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="text-right">
+                                <p className="font-semibold text-gray-800">{presentCount}/{totalCount}</p>
+                                <p className="text-sm text-gray-600">Present/Total</p>
+                              </div>
+                              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                attendanceRate >= 80 ? 'bg-green-100 text-green-800' :
+                                attendanceRate >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {attendanceRate}%
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Daily Attendance Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Recent Attendance Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Get last 7 days of attendance */}
+                    {Array.from({ length: 7 }, (_, i) => {
+                      const date = new Date();
+                      date.setDate(date.getDate() - i);
+                      const dateString = date.toISOString().split('T')[0];
+                      const dayAttendance = getAttendanceForDate(dateString);
+                      const presentCount = dayAttendance.filter(record => record.Status === 'Present' || record.Status === 'PRESENT' || record.Status === '1').length;
+                      const totalCount = dayAttendance.length;
+                      const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+                      
+                      return (
+                        <div key={dateString} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-800">{date.toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600">{date.toLocaleDateString('en-US', { weekday: 'long' })}</p>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="text-right">
+                              <p className="font-semibold text-gray-800">{presentCount}/{totalCount}</p>
+                              <p className="text-sm text-gray-600">Present/Total</p>
+                            </div>
+                            {totalCount > 0 && (
+                              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                attendanceRate >= 80 ? 'bg-green-100 text-green-800' :
+                                attendanceRate >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {attendanceRate}%
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </CardContent>
         </Card>
       </div>

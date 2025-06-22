@@ -51,9 +51,12 @@ export default function ParentDashboard() {
   const childGrades = (data?.grades || []).filter(grade => grade.StudentID === selectedChild);
   const childAttendance = (data?.attendance || []).filter(att => att.StudentID === selectedChild);
   const childPayments = (data?.payments || []).filter(payment => payment.StudentID === selectedChild);
-
   const gradeColumns = [
-    { accessorKey: "Subject.SubjectName", header: "Subject" },
+    { 
+      accessorKey: "subject.SubjectName", 
+      header: "Subject",
+      cell: ({ row }: any) => row.original.subject?.SubjectName || 'N/A'
+    },
     { accessorKey: "Term", header: "Term" },
     { accessorKey: "CA", header: "CA" },
     { accessorKey: "Exam", header: "Exam" },
@@ -62,9 +65,24 @@ export default function ParentDashboard() {
   ];
 
   const attendanceColumns = [
-    { accessorKey: "Subject.SubjectName", header: "Subject" },
-    { accessorKey: "Date", header: "Date" },
-    { accessorKey: "Status", header: "Status" }
+    { 
+      accessorKey: "subject.SubjectName", 
+      header: "Subject",
+      cell: ({ row }: any) => row.original.subject?.SubjectName || 'N/A'
+    },
+    { 
+      accessorKey: "Date", 
+      header: "Date",
+      cell: ({ row }: any) => new Date(row.original.Date).toLocaleDateString()
+    },
+    { 
+      accessorKey: "Status", 
+      header: "Status",
+      cell: ({ row }: any) => (        <Badge variant={row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? 'default' : 'destructive'}>
+          {(row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1') ? 'Present' : 'Absent'}
+        </Badge>
+      )
+    }
   ];
 
   const paymentColumns = [
@@ -73,19 +91,26 @@ export default function ParentDashboard() {
     { accessorKey: "PaymentDate", header: "Date" },
     { accessorKey: "PaymentMethod", header: "Method" },
     { accessorKey: "Term", header: "Term" }
-  ];  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">        {/* Header */}
+  ];  return (    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">        {/* Enhanced Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Users className="h-12 w-12 text-purple-600" />
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+                <Users className="h-12 w-12 text-white" />
+              </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
                 <p className="text-lg text-gray-600">Welcome back, {data?.user?.name || 'Parent'}</p>
-                <p className="text-sm text-gray-500">
-                  Monitoring {(data?.children || []).length} child{(data?.children || []).length !== 1 ? 'ren' : ''}
-                </p>
+                <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                  <span>Monitoring {(data?.children || []).length} child{(data?.children || []).length !== 1 ? 'ren' : ''}</span>
+                  {selectedChildData && (
+                    <>
+                      <span>•</span>
+                      <span>Currently viewing: {selectedChildData.FirstName} {selectedChildData.LastName}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <Button 
@@ -97,23 +122,47 @@ export default function ParentDashboard() {
               Logout
             </Button>
           </div>
-        </div>{/* Child Selector */}
-        {(data.children || []).length > 1 && (
+        </div>{/* Child Selector - Enhanced Dropdown */}
+        {(data.children || []).length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Select Child</CardTitle>
+              <CardTitle className="flex items-center">
+                <Users className="mr-2 h-5 w-5" />
+                Select Child to Monitor
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {(data.children || []).map((child: any) => (
-                  <Button
-                    key={child.AdmissionNumber}
-                    variant={selectedChild === child.AdmissionNumber ? "default" : "outline"}
-                    onClick={() => setSelectedChild(child.AdmissionNumber)}
-                  >
-                    {child.FirstName} {child.LastName} ({child.Class?.ClassName})
-                  </Button>
-                ))}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="child-select" className="block text-sm font-medium text-gray-700 mb-2">
+                      Choose Child:
+                    </label>
+                    <select
+                      id="child-select"
+                      value={selectedChild}
+                      onChange={(e) => setSelectedChild(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    >
+                      {(data.children || []).map((child: any) => (
+                        <option key={child.AdmissionNumber} value={child.AdmissionNumber}>
+                          {child.FirstName} {child.LastName} - {child.Class?.ClassName || 'No Class'} ({child.AdmissionNumber})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 w-full">
+                      <p className="text-sm text-purple-600 font-medium">Currently Monitoring:</p>
+                      <p className="text-lg font-bold text-purple-800">
+                        {selectedChildData ? `${selectedChildData.FirstName} ${selectedChildData.LastName}` : 'Select a child'}
+                      </p>
+                      <p className="text-sm text-purple-600">
+                        {selectedChildData ? `${selectedChildData.Class?.ClassName || 'No Class'} • ${selectedChildData.AdmissionNumber}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -146,57 +195,75 @@ export default function ParentDashboard() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{childGrades.length}</div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Grade</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {childGrades.length > 0 
-                      ? (childGrades.reduce((sum: number, grade: any) => sum + grade.TotalScore, 0) / childGrades.length).toFixed(1)
-                      : 'N/A'
-                    }
+            </Card>            {/* Enhanced Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-blue-100 text-sm font-medium">Total Subjects</p>
+                      <p className="text-3xl font-bold">{childGrades.length}</p>
+                      <p className="text-xs text-blue-200">Enrolled courses</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {childAttendance.length > 0 
-                      ? Math.round((childAttendance.filter((a: any) => a.Status === 'Present').length / childAttendance.length) * 100)
-                      : 0
-                    }%
+              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-green-100 text-sm font-medium">Average Grade</p>
+                      <p className="text-3xl font-bold">
+                        {childGrades.length > 0 
+                          ? (childGrades.reduce((sum: number, grade: any) => sum + grade.TotalScore, 0) / childGrades.length).toFixed(1)
+                          : 'N/A'
+                        }
+                      </p>
+                      <p className="text-xs text-green-200">Overall performance</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Payments Made</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{childPayments.length}</div>
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Calendar className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-purple-100 text-sm font-medium">Attendance Rate</p>
+                      <p className="text-3xl font-bold">
+                        {childAttendance.length > 0 
+                          ? Math.round((childAttendance.filter((a: any) => a.Status === 'Present' || a.Status === 'PRESENT' || a.Status === '1').length / childAttendance.length) * 100)
+                          : 0
+                        }%
+                      </p>
+                      <p className="text-xs text-purple-200">This term</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <CreditCard className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-orange-100 text-sm font-medium">Payments Made</p>
+                      <p className="text-3xl font-bold">{childPayments.length}</p>
+                      <p className="text-xs text-orange-200">Total transactions</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -209,12 +276,11 @@ export default function ParentDashboard() {
                   Academic Performance
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <DataTable 
+              <CardContent>                <DataTable 
                   columns={gradeColumns} 
                   data={childGrades} 
                   searchPlaceholder="Search subjects..."
-                  searchColumn="Subject.SubjectName"
+                  searchColumn="subject.SubjectName"
                 />
               </CardContent>
             </Card>
