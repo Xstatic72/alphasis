@@ -44,14 +44,14 @@ export default function Home() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link 
-              href="/dashboard" 
+              href="/login" 
               className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-bold px-10 py-5 rounded-2xl shadow-2xl hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 text-lg overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex items-center gap-3">
                 <Rocket className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
                 <span>Get Started</span>
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-2 transition-transform duration-300" />
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-3 transition-transform duration-300" />
               </div>
             </Link>
             

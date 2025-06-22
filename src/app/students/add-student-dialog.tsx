@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,12 +15,45 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addStudent } from "./actions";
-import { Plus, User, Calendar, MapPin, Phone } from "lucide-react";
+import { Plus, User, Calendar, MapPin, Phone, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+
+type Class = {
+  ClassID: string;
+  ClassName: string;
+};
+
+type FormField = {
+  name: string;
+  label: string;
+  type: string;
+  icon: any;
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+};
 
 export function AddStudentDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [classes, setClasses] = useState<Class[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchClasses();
+    }
+  }, [isOpen]);
+
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch('/api/classes');
+      if (response.ok) {
+        const data = await response.json();
+        setClasses(data.classes || []);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -46,7 +79,6 @@ export function AddStudentDialog() {
       setIsLoading(false);
     }
   };
-
   const formFields = [
     {
       name: "FirstName",
@@ -71,9 +103,13 @@ export function AddStudentDialog() {
     {
       name: "Gender",
       label: "Gender",
-      type: "text",
+      type: "select",
       icon: User,
-      placeholder: "Male/Female/Other",
+      options: [
+        { value: "Male", label: "Male" },
+        { value: "Female", label: "Female" },
+        { value: "Other", label: "Other" }
+      ]
     },
     {
       name: "ParentContact",
@@ -91,10 +127,10 @@ export function AddStudentDialog() {
     },
     {
       name: "StudentClassID",
-      label: "Class ID",
-      type: "text",
-      icon: User,
-      placeholder: "Enter class ID",
+      label: "Class",
+      type: "select",
+      icon: GraduationCap,
+      options: classes.map(cls => ({ value: cls.ClassID, label: cls.ClassName }))
     },
   ];
 
@@ -109,30 +145,29 @@ export function AddStudentDialog() {
       </DialogTrigger>
 
       <AnimatePresence>
-        {isOpen && (
-          <DialogContent className="sm:max-w-[500px] bg-white/95 backdrop-blur-sm border-gray-200/50">
+        {isOpen && (          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-gray-200/50 shadow-2xl rounded-2xl">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
+              className="p-8"
             >
-              <DialogHeader className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-r from-[#ff4e00] to-[#8ea604]">
-                    <User className="h-5 w-5 text-white" />
+              <DialogHeader className="space-y-4 pb-8 border-b border-gray-100">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#ff4e00] via-[#ec9f05] to-[#8ea604] shadow-lg">
+                    <User className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl font-semibold text-gray-800">
+                    <DialogTitle className="text-2xl font-bold text-gray-800">
                       Add New Student
-                    </DialogTitle>                    <DialogDescription className="text-gray-600">
-                      Fill in the student&apos;s information below to add them to the
-                      system.
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600 mt-1">
+                      Fill in the student&apos;s information below to add them to the system.
                     </DialogDescription>
                   </div>
                 </div>
-              </DialogHeader>              <form action={handleSubmit} className="form-container mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              </DialogHeader>              <form action={handleSubmit} className="space-y-8 mt-8">                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {formFields.map((field, index) => {
                     const IconComponent = field.icon;
                     return (
@@ -145,39 +180,70 @@ export function AddStudentDialog() {
                       >
                         <Label
                           htmlFor={field.name}
-                          className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+                          className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3 px-1"
                         >
                           <IconComponent className="h-4 w-4 text-[#ff4e00]" />
                           {field.label}
+                          <span className="text-red-500 ml-1">*</span>
                         </Label>
-                        <div className="form-input-with-icon">
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type={field.type}
-                            placeholder={field.placeholder}
-                            required
-                            className="input-modern hover-lift"
-                          />
+                        <div className="relative group">
+                          {field.type === "select" ? (
+                            <select
+                              id={field.name}
+                              name={field.name}
+                              required
+                              className="input-modern hover-lift h-12 px-4 text-base w-full appearance-none bg-white"
+                              style={{
+                                backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>")`,
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'right 1rem center',
+                                backgroundSize: '0.65rem auto',
+                                paddingRight: '3rem'
+                              }}
+                            >
+                              <option value="">Choose {field.label.toLowerCase()}...</option>
+                              {field.options?.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <Input
+                              id={field.name}
+                              name={field.name}
+                              type={field.type}
+                              placeholder={field.placeholder}
+                              required
+                              className="input-modern hover-lift h-12 px-4 text-base"
+                            />
+                          )}
+                          {field.type === "date" && (
+                            <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                          )}
                         </div>
                       </motion.div>
                     );
                   })}
-                </div>                <DialogFooter className="flex gap-3 pt-4 border-t border-gray-200/50">
+                </div><DialogFooter className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-gray-100">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsOpen(false)}
-                    className="btn-outline hover-lift"
+                    className="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 font-medium text-gray-700"
                     disabled={isLoading}
                   >
                     Cancel
                   </Button>
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto"
+                  >
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="btn-primary hover-lift"
+                      className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#ff4e00] via-[#ec9f05] to-[#8ea604] hover:from-[#e63900] hover:via-[#d18b04] hover:to-[#7a9503] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform"
                     >
                       {isLoading ? (
                         <motion.div
@@ -192,7 +258,7 @@ export function AddStudentDialog() {
                       ) : (
                         <Plus className="mr-2 h-4 w-4" />
                       )}
-                      {isLoading ? "Adding..." : "Add Student"}
+                      {isLoading ? "Adding Student..." : "Add Student"}
                     </Button>
                   </motion.div>
                 </DialogFooter>

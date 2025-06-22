@@ -18,10 +18,12 @@ interface StudentDetailPageProps {
 }
 
 export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
-  const { id } = await params;  const student = await prisma.student.findUnique({
+  const { id } = await params;
+
+  const student = await prisma.student.findUnique({
     where: { AdmissionNumber: id },
     include: {
-      Class: true,
+      Renamedclass: true,
       Payment: {
         orderBy: { PaymentDate: 'desc' },
         take: 5,
@@ -32,6 +34,18 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   if (!student) {
     notFound();
   }
+
+  // Get student name from person table
+  const person = await prisma.$queryRaw`
+    SELECT FirstName, LastName FROM person WHERE PersonID = ${id}
+  ` as any[];
+
+  const studentData = {
+    ...student,
+    FirstName: person[0]?.FirstName || '',
+    LastName: person[0]?.LastName || '',
+    Class: student.Renamedclass
+  };
   return (
     <div className="min-h-full bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="container mx-auto py-8 px-4">
@@ -60,16 +74,16 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                   <div className="p-4 bg-gradient-to-br from-aerospace-orange to-gamboge rounded-2xl shadow-lg">
                     <User className="h-10 w-10 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                      {student.FirstName} {student.LastName}
+                  <div className="flex-1">                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                      {studentData.FirstName} {studentData.LastName}
                     </h1>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <GraduationCap className="h-4 w-4" />
-                      <span className="font-medium">ID: {student.AdmissionNumber}</span>
-                    </div>                    {student.Class && (
+                      <span className="font-medium">ID: {studentData.AdmissionNumber}</span>
+                    </div>
+                    {studentData.Class && (
                       <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-apple-green/10 to-amber/10 text-gray-700 border border-apple-green/20">
-                        Class: {student.Class.ClassName}
+                        Class: {studentData.Class.ClassName}
                       </div>
                     )}
                   </div>

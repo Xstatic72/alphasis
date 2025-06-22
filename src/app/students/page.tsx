@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
 import { AddStudentDialog } from "./add-student-dialog";
+import { EnhancedAddStudentDialog } from "@/components/forms/enhanced-add-student-dialog";
 import { Users } from "lucide-react";
 
 type PrismaStudent = {
@@ -54,9 +55,11 @@ export default async function StudentsPage() {
                   <div className="w-2 h-2 rounded-full bg-aerospace-orange animate-pulse-glow"></div>
                   <span className="text-sm text-gray-500">{students.length} students enrolled</span>
                 </div>
-              </div>
+              </div>            </div>
+            <div className="flex gap-3">
+              <AddStudentDialog />
+              <EnhancedAddStudentDialog />
             </div>
-            <AddStudentDialog />
           </div>
         </div>
 

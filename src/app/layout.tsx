@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import PageTransition from "@/components/layout/PageTransition";
+import Navbar from "@/components/layout/Navbar";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -31,11 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Header />
+        <Navbar />
         <PageTransition>
           <main className="flex-1">{children}</main>
         </PageTransition>
-        <Footer />
         <Toaster />
       </body>
     </html>

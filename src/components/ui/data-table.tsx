@@ -42,7 +42,7 @@ interface DataTableProps<TData, TValue> {
 
 export function DataTable<TData, TValue>({
   columns,
-  data,
+  data = [], // Provide default empty array
   searchPlaceholder = "Search...",
   searchColumn,
 }: DataTableProps<TData, TValue>) {
@@ -50,9 +50,8 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
   const table = useReactTable({
-    data,
+    data: data || [], // Ensure data is never undefined
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -69,9 +68,14 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   });
-
   // Use the first searchable column if no searchColumn is specified
-  const defaultSearchColumn = searchColumn || "name";
+  const getFirstAccessorColumn = () => {
+    const accessorColumn = columns.find(col => 'accessorKey' in col && col.accessorKey);
+    return accessorColumn ? (accessorColumn as any).accessorKey : undefined;
+  };
+  
+  const defaultSearchColumn = searchColumn || getFirstAccessorColumn();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -214,114 +218,6 @@ export function DataTable<TData, TValue>({
           </Table>
         </div>
       </div>
-                variant="outline" 
-                className="bg-white/50 border-gray-200/50 hover:bg-gradient-to-r hover:from-[#ff4e00]/10 hover:to-[#8ea604]/10 transition-all duration-300"
-              <Button>
-                <Eye className="mr-2 h-4 w-4" />
-                View
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-sm border-gray-200/50">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize hover:bg-gradient-to-r hover:from-[#ff4e00]/10 hover:to-[#8ea604]/10"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Enhanced Table */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 shadow-lg overflow-hidden"
-      >
-        <Table>
-          <TableHeader className="bg-gradient-to-r from-gray-50/80 to-white/80">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-gray-200/50">
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead 
-                      key={header.id}
-                      className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50/50 to-white/50"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            <AnimatePresence>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, index) => (
-                  <motion.tr
-                    key={row.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: index * 0.05, duration: 0.3 }}
-                    className="border-gray-200/50 hover:bg-gradient-to-r hover:from-[#ff4e00]/5 hover:to-[#8ea604]/5 transition-all duration-300 group"
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell 
-                        key={cell.id}
-                        className="py-4 group-hover:text-gray-900 transition-colors duration-300"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </motion.tr>
-                ))
-              ) : (
-                <motion.tr
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-32 text-center"
-                  >
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <Filter className="h-12 w-12 text-gray-300" />
-                      <p className="text-gray-500 font-medium">No results found</p>
-                      <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
-                    </div>
-                  </TableCell>
-                </motion.tr>
-              )}
-            </AnimatePresence>
-          </TableBody>
-        </Table>
-      </motion.div>
 
       {/* Enhanced Pagination */}
       <motion.div

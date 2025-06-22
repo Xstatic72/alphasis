@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
 import { AddClassDialog } from "./add-class-dialog";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Users, BookOpen } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type SchoolClass = {
   ClassID: string;
@@ -10,85 +11,77 @@ type SchoolClass = {
 }
 
 export default async function ClassesPage() {
-  const classes: SchoolClass[] = await prisma.class.findMany();
+  const classes: SchoolClass[] = await prisma.renamedclass.findMany({
+    orderBy: { ClassName: 'asc' }
+  });
 
   return (
-    <div className="min-h-full bg-main-gradient">
-      <div className="page-container animate-slide-in-up">
-        {/* Page Header with enhanced styling */}
-        <div className="section-header">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="icon-container animate-float shadow-apple">
-                <GraduationCap className="h-8 w-8 text-white" />
-              </div>
+              <GraduationCap className="h-12 w-12 text-green-600" />
               <div>
-                <h1 className="text-4xl font-bold gradient-text">
-                  Classes
-                </h1>
-                <p className="text-gray-600 mt-1 text-lg">
-                  Organize students by grade levels and sections
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="w-2 h-2 rounded-full bg-apple-green animate-pulse-glow"></div>
-                  <span className="text-sm text-gray-500">{classes.length} classes organized</span>
-                </div>
+                <h1 className="text-3xl font-bold text-gray-900">Classes Management</h1>
+                <p className="text-lg text-gray-600">Organize students by grade levels and sections</p>
+                <p className="text-sm text-gray-500">{classes.length} classes organized</p>
               </div>
             </div>
             <AddClassDialog />
           </div>
         </div>
 
-        {/* Enhanced Data Table Card */}
-        <div className="content-card hover-lift">
-          <div className="data-table-container">            
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{classes.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Classes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{classes.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Grade Levels</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Set(classes.map((schoolClass) => schoolClass.ClassName.split(' ')[0])).size}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Classes Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Classes List</CardTitle>
+          </CardHeader>
+          <CardContent>
             <DataTable 
               columns={columns} 
               data={classes} 
               searchPlaceholder="Search classes by name..."
               searchColumn="ClassName"
             />
-          </div>
-        </div>        {/* Additional Info Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-apple-green to-amber rounded-lg">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Classes</p>
-                <p className="text-2xl font-bold text-gradient-secondary">{classes.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-aerospace-orange to-gamboge rounded-lg">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Active Classes</p>
-                <p className="text-2xl font-bold text-gradient-primary">{classes.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-gamboge to-amber rounded-lg">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Class Names</p>
-                <p className="text-2xl font-bold gradient-text">
-                  {new Set(classes.map((schoolClass) => schoolClass.ClassName.charAt(0))).size}+
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

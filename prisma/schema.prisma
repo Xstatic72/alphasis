@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,88 +7,137 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Student {
-  AdmissionNumber String      @id @default(cuid())
-  FirstName       String
-  LastName        String
-  DateOfBirth     DateTime
-  Gender          String
-  ParentContact   String
-  Address         String
-  StudentClassID  String
-  Class           Class       @relation(fields: [StudentClassID], references: [ClassID])
-  Registration    Registration[]
-  Grade           Grade[]
-  Attendance      Attendance[]
-  Payment         Payment[]
+model attendance {
+  AttendanceID String            @id @unique(map: "AttendanceID") @db.VarChar(4)
+  StudentID    String            @db.VarChar(10)
+  SubjectID    String            @db.VarChar(10)
+  Date         DateTime          @db.Date
+  Status       attendance_Status
+  student      student           @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "attendance_ibfk_1")
+  subject      subject           @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "attendance_ibfk_2")
+
+  @@index([StudentID], map: "StudentID")
+  @@index([SubjectID], map: "SubjectID")
 }
 
-model Class {
-  ClassID   String    @id @default(cuid())
-  ClassName String
-  Student   Student[]
+/// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
+model Renamedclass {
+  ClassID   String    @id @unique(map: "ClassID") @db.VarChar(10)
+  ClassName String    @db.VarChar(20)
+  student   student[]
+
+  @@map("class")
 }
 
-model Subject {
-  SubjectID    String         @id @default(cuid())
-  SubjectName  String
-  ClassLevel   String
-  TeacherID    String
-  Teacher      Teacher        @relation(fields: [TeacherID], references: [TeacherID])
-  Registration Registration[]
-  Grade        Grade[]
-  Attendance   Attendance[]
+model grade {
+  GradeID    String  @id @unique(map: "GradeID") @db.VarChar(4)
+  StudentID  String  @db.VarChar(10)
+  SubjectID  String  @db.VarChar(10)
+  Term       String  @db.VarChar(10)
+  CA         Int?
+  Exam       Int?
+  TotalScore Int?
+  Grade      String? @db.VarChar(3)
+  student    student @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "grade_ibfk_1")
+  subject    subject @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "grade_ibfk_2")
+
+  @@index([StudentID], map: "StudentID")
+  @@index([SubjectID], map: "SubjectID")
 }
 
-model Registration {
-  RegistrationID String  @id @default(cuid())
-  Term           String
-  StudentID      String
-  SubjectID      String
-  Student        Student @relation(fields: [StudentID], references: [AdmissionNumber])
-  Subject        Subject @relation(fields: [SubjectID], references: [SubjectID])
+model parent {
+  ParentID      String    @id @unique(map: "ParentID") @db.VarChar(10)
+  ContactNumber String    @db.VarChar(15)
+  person        person    @relation(fields: [ParentID], references: [PersonID], onDelete: NoAction, onUpdate: NoAction, map: "parent_ibfk_1")
+  student       student[]
 }
 
-model Grade {
-  GradeID    String  @id @default(cuid())
-  Term       String
-  CA         Float
-  Exam       Float
-  TotalScore Float
-  Grade      String
-  StudentID  String
-  SubjectID  String
-  Student    Student @relation(fields: [StudentID], references: [AdmissionNumber])
-  Subject    Subject @relation(fields: [SubjectID], references: [SubjectID])
-}
-
-model Attendance {
-  AttendanceID String   @id @default(cuid())
-  Date         DateTime
-  Status       String
-  StudentID    String
-  SubjectID    String
-  Student      Student  @relation(fields: [StudentID], references: [AdmissionNumber])
-  Subject      Subject  @relation(fields: [SubjectID], references: [SubjectID])
-}
-
-model Payment {
-  TransactionID    String   @id @default(cuid())
-  Amount           Float
-  PaymentDate      DateTime
-  PaymentMethod    String
+model payment {
+  TransactionID    Int                   @id @unique(map: "TransactionID")
+  StudentID        String                @db.VarChar(10)
+  Amount           Decimal               @db.Decimal(10, 2)
+  PaymentDate      DateTime              @db.Date
+  PaymentMethod    payment_PaymentMethod
   Confirmation     Boolean
   ReceiptGenerated Boolean
-  Term             String
-  StudentID        String
-  Student          Student  @relation(fields: [StudentID], references: [AdmissionNumber])
+  Term             String                @db.VarChar(10)
+  student          student               @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "payment_ibfk_1")
+
+  @@index([StudentID], map: "StudentID")
 }
 
-model Teacher {
-  TeacherID String    @id @default(cuid())
-  FirstName String
-  LastName  String
-  PhoneNum  String
-  Email     String    @unique
-  Subject   Subject[]
+model person {
+  PersonID  String   @id @db.VarChar(10)
+  FirstName String   @db.VarChar(50)
+  LastName  String   @db.VarChar(50)
+  parent    parent?
+  teacher   teacher?
+}
+
+model registration {
+  RegistrationID String  @id @unique(map: "RegistrationID") @db.VarChar(4)
+  StudentID      String  @db.VarChar(10)
+  SubjectID      String  @db.VarChar(10)
+  Term           String  @db.VarChar(10)
+  student        student @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "registration_ibfk_1")
+  subject        subject @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "registration_ibfk_2")
+
+  @@index([StudentID], map: "StudentID")
+  @@index([SubjectID], map: "SubjectID")
+}
+
+model student {
+  AdmissionNumber String         @id @unique(map: "AdmissionNumber") @db.VarChar(10)
+  DateOfBirth     DateTime       @db.Date
+  Gender          student_Gender
+  StudentClassID  String         @db.VarChar(10)
+  ParentContact   String?        @db.VarChar(15)
+  Address         String?        @db.VarChar(100)
+  ParentID        String?        @db.VarChar(10)
+  attendance      attendance[]
+  grade           grade[]
+  payment         payment[]
+  registration    registration[]
+  parent          parent?        @relation(fields: [ParentID], references: [ParentID], onDelete: NoAction, onUpdate: NoAction, map: "student_ibfk_1")
+  Renamedclass    Renamedclass   @relation(fields: [StudentClassID], references: [ClassID], onDelete: NoAction, onUpdate: NoAction, map: "student_ibfk_2")
+
+  @@index([ParentID], map: "ParentID")
+  @@index([StudentClassID], map: "StudentClassID")
+}
+
+model subject {
+  SubjectID    String         @id @unique(map: "SubjectID") @db.VarChar(10)
+  SubjectName  String         @db.VarChar(50)
+  TeacherID    String?        @db.VarChar(10)
+  ClassLevel   String         @db.VarChar(10)
+  attendance   attendance[]
+  grade        grade[]
+  registration registration[]
+  teacher      teacher?       @relation(fields: [TeacherID], references: [TeacherID], onDelete: NoAction, onUpdate: NoAction, map: "subject_ibfk_1")
+
+  @@index([TeacherID], map: "TeacherID")
+}
+
+model teacher {
+  TeacherID String    @id @unique(map: "TeacherID") @db.VarChar(10)
+  PhoneNum  String?   @db.VarChar(15)
+  Email     String?   @db.VarChar(50)
+  Address   String?   @db.VarChar(100)
+  subject   subject[]
+  person    person    @relation(fields: [TeacherID], references: [PersonID], onDelete: NoAction, onUpdate: NoAction, map: "teacher_ibfk_1")
+}
+
+enum student_Gender {
+  M
+  F
+}
+
+enum attendance_Status {
+  PRESENT @map("1")
+  ABSENT  @map("0")
+}
+
+enum payment_PaymentMethod {
+  Cash
+  Transfer
 }
