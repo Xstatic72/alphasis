@@ -62,7 +62,7 @@ export default async function ClassesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Set(classes.map((schoolClass) => schoolClass.ClassName.split(' ')[0])).size}
+                {new Set(classes.map((schoolClass) => (schoolClass.ClassName || '').split(' ')[0])).size}
               </div>
             </CardContent>
           </Card>

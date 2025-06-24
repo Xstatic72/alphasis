@@ -18,11 +18,11 @@ interface TeacherDetailPageProps {
 
 export default async function TeacherDetailPage({ params }: TeacherDetailPageProps) {
   const { id } = await params;
-  
   const teacher = await prisma.teacher.findUnique({
     where: { TeacherID: id },
     include: {
-      Subject: true,
+      subject: true,
+      person: true,
     },
   });
 
@@ -58,7 +58,7 @@ export default async function TeacherDetailPage({ params }: TeacherDetailPagePro
                     <UserCheck className="h-10 w-10 text-white" />
                   </div>
                   <div className="flex-1">                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                      {teacher.FirstName} {teacher.LastName}
+                      {teacher.person?.FirstName || ''} {teacher.person?.LastName || ''}
                     </h1>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <GraduationCap className="h-4 w-4" />
@@ -108,9 +108,9 @@ export default async function TeacherDetailPage({ params }: TeacherDetailPagePro
                     Subjects Taught
                   </h2>
                 </div>
-                
-                {teacher.Subject.length > 0 ? (
-                  <div className="space-y-3">                    {teacher.Subject.map((subject: SubjectType) => (
+                  {teacher.subject.length > 0 ? (
+                  <div className="space-y-3">
+                    {teacher.subject.map((subject: SubjectType) => (
                       <div
                         key={subject.SubjectID}
                         className="p-4 rounded-xl border border-gray-200 bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-all duration-200"

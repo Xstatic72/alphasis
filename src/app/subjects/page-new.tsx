@@ -9,7 +9,7 @@ type Subject = {
   SubjectID: string;
   SubjectName: string;
   ClassLevel: string;
-  TeacherID: string;
+  TeacherID: string | null;
 }
 
 export default async function SubjectsPage() {
@@ -17,7 +17,7 @@ export default async function SubjectsPage() {
     orderBy: { SubjectName: 'asc' }
   });
   const uniqueClassLevels = new Set(subjects.map((subject) => subject.ClassLevel)).size;
-  const uniqueTeachers = new Set(subjects.map((subject) => subject.TeacherID)).size;
+  const uniqueTeachers = new Set(subjects.map((subject) => subject.TeacherID).filter(id => id !== null)).size;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100 p-6">

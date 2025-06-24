@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
@@ -25,15 +25,15 @@ export async function GET() {
     }    // Get class information using raw SQL
     const classResult = await prisma.$queryRaw`
       SELECT ClassID, ClassName FROM class WHERE ClassID = ${student.StudentClassID}
-    ` as any[];
+    ` as { ClassID: string; ClassName: string }[];
 
     // Get person details using raw SQL  
     const personResult = await prisma.$queryRaw`
       SELECT PersonID, FirstName, LastName FROM person WHERE PersonID = ${session.userId}
-    ` as any[];
+    ` as { PersonID: string; FirstName: string; LastName: string }[];
 
     const person = personResult[0];
-    const studentClass = classResult[0];// Get grades using raw SQL for reliability
+    const studentClass = classResult[0];    // Get grades using raw SQL for reliability
     const grades = await prisma.$queryRaw`
       SELECT 
         g.GradeID,
@@ -49,7 +49,17 @@ export async function GET() {
       LEFT JOIN subject s ON g.SubjectID = s.SubjectID
       WHERE g.StudentID = ${student.AdmissionNumber}
       ORDER BY g.Term DESC
-    ` as any[];// Get attendance (last 20 records) using raw SQL for reliability
+    ` as {
+      GradeID: string;
+      StudentID: string;
+      SubjectID: string;
+      Term: string;
+      CA: number | null;
+      Exam: number | null;
+      TotalScore: number | null;
+      Grade: string | null;
+      SubjectName: string;
+    }[];    // Get attendance (last 20 records) using raw SQL for reliability
     const attendance = await prisma.$queryRaw`
       SELECT 
         a.AttendanceID,
@@ -63,7 +73,14 @@ export async function GET() {
       WHERE a.StudentID = ${student.AdmissionNumber}
       ORDER BY a.Date DESC
       LIMIT 20
-    ` as any[];
+    ` as {
+      AttendanceID: string;
+      StudentID: string;
+      SubjectID: string;
+      Date: Date;
+      Status: string;
+      SubjectName: string;
+    }[];
 
     // Get payments
     const payments = await prisma.payment.findMany({
@@ -87,7 +104,17 @@ export async function GET() {
       LEFT JOIN person p ON t.TeacherID = p.PersonID
       WHERE r.StudentID = ${student.AdmissionNumber}
       ORDER BY s.SubjectName
-    ` as any[];// Get available subjects for registration (filtered by student's class level)
+    ` as {
+      RegistrationID: string;
+      StudentID: string;
+      SubjectID: string;
+      Term: string;
+      SubjectName: string;
+      ClassLevel: string;
+      TeacherID: string;
+      TeacherFirstName: string;
+      TeacherLastName: string;
+    }[];// Get available subjects for registration (filtered by student's class level)
     // Map full class names to class level abbreviations
     const getClassLevel = (className: string) => {
       if (className?.startsWith('JSS1')) return 'JSS1';
@@ -97,8 +124,7 @@ export async function GET() {
       if (className?.startsWith('SS2') || className?.startsWith('SSS2')) return 'SSS2';
       if (className?.startsWith('SS3') || className?.startsWith('SSS3')) return 'SSS3';
       return className;
-    };    const classLevel = getClassLevel(studentClass?.ClassName);
-      // Get all subjects for the student's class level using raw SQL for reliability
+    };    const classLevel = getClassLevel(studentClass?.ClassName);      // Get all subjects for the student's class level using raw SQL for reliability
     const allSubjectsForClass = await prisma.$queryRaw`
       SELECT 
         s.SubjectID,
@@ -112,15 +138,21 @@ export async function GET() {
       LEFT JOIN person p ON t.TeacherID = p.PersonID
       WHERE s.ClassLevel = ${classLevel}
       ORDER BY s.SubjectName
-    ` as any[];
+    ` as {
+      SubjectID: string;
+      SubjectName: string;
+      ClassLevel: string;
+      TeacherID: string;
+      TeacherFirstName: string;
+      TeacherLastName: string;
+    }[];
 
     // Get already registered subject IDs
     const registeredSubjectIds = registeredSubjects.map(reg => reg.SubjectID);
-    
-    // Filter out subjects already registered for
+      // Filter out subjects already registered for
     const availableSubjects = allSubjectsForClass
-      .filter((subject: any) => !registeredSubjectIds.includes(subject.SubjectID))
-      .map((subject: any) => ({
+      .filter((subject) => !registeredSubjectIds.includes(subject.SubjectID))
+      .map((subject) => ({
         SubjectID: subject.SubjectID,
         SubjectName: subject.SubjectName,
         ClassLevel: subject.ClassLevel,
@@ -131,14 +163,14 @@ export async function GET() {
           LastName: subject.TeacherLastName
         }
       }));    // Format the data for the UI
-    const formattedGrades = grades.map((grade: any) => ({
+    const formattedGrades = grades.map((grade) => ({
       ...grade,
       subject: {
         SubjectName: grade.SubjectName
       }
     }));
 
-    const formattedAttendance = attendance.map((att: any) => ({
+    const formattedAttendance = attendance.map((att) => ({
       ...att,
       Status: att.Status === '1' ? 'Present' : 'Absent',
       subject: {
@@ -146,7 +178,7 @@ export async function GET() {
       }
     }));
 
-    const formattedRegisteredSubjects = registeredSubjects.map((reg: any) => ({
+    const formattedRegisteredSubjects = registeredSubjects.map((reg) => ({
       RegistrationID: reg.RegistrationID,
       StudentID: reg.StudentID,
       SubjectID: reg.SubjectID,
@@ -160,13 +192,17 @@ export async function GET() {
           LastName: reg.TeacherLastName
         }
       }
-    }));
-
-    return NextResponse.json({
+    }));    return NextResponse.json({
       user: {
         PersonID: person?.PersonID,
         name: person ? `${person.FirstName} ${person.LastName}` : '',
-        studentProfile: student
+        studentProfile: {
+          ...student,
+          Renamedclass: studentClass ? {
+            ClassID: studentClass.ClassID,
+            ClassName: studentClass.ClassName
+          } : null
+        }
       },
       grades: formattedGrades || [],
       attendance: formattedAttendance || [],

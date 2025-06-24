@@ -16,11 +16,34 @@ export async function createClass(values: z.infer<typeof classSchema>) {
       success: false,
       message: "Invalid data provided.",
     }
-  }
-
-  try {
-    await prisma.class.create({
+  }  try {
+    // Generate a unique ClassID
+    const generateClassId = () => {
+      const baseName = validatedFields.data.ClassName
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .substring(0, 6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `${baseName}${random}`.substring(0, 10);
+    };
+    
+    let classId = generateClassId();
+    
+    // Ensure the ID is unique
+    let existingClass = await prisma.renamedclass.findUnique({
+      where: { ClassID: classId }
+    });
+    
+    while (existingClass) {
+      classId = generateClassId();
+      existingClass = await prisma.renamedclass.findUnique({
+        where: { ClassID: classId }
+      });
+    }
+    
+    await prisma.renamedclass.create({
       data: {
+        ClassID: classId,
         ClassName: validatedFields.data.ClassName,
       },
     })
@@ -53,7 +76,7 @@ export async function updateClass(
   }
 
   try {
-    await prisma.class.update({
+    await prisma.renamedclass.update({
       where: { ClassID: id },
       data: {
         ClassName: validatedFields.data.ClassName,
@@ -75,7 +98,7 @@ export async function updateClass(
 
 export async function deleteClass(id: string) {
   try {
-    await prisma.class.delete({
+    await prisma.renamedclass.delete({
       where: { ClassID: id },
     })
 

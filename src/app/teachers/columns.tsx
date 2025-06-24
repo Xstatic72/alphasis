@@ -13,23 +13,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deleteTeacher } from "./actions";
 import { EditTeacherDialog } from "./edit-teacher-dialog";
+import { teacher } from '@prisma/client';
 
-// This type is based on the Prisma schema
-export type Teacher = {
-  TeacherID: string;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  PhoneNum: string;
+// Define a type that includes the person relation
+type TeacherWithPerson = teacher & {
+  person: {
+    FirstName: string;
+    LastName: string;
+  };
 };
 
-export const columns: ColumnDef<Teacher>[] = [
+export const columns: ColumnDef<TeacherWithPerson>[] = [
   {
-    accessorKey: "FirstName",
+    accessorKey: "person.FirstName",
     header: "First Name",
   },
   {
-    accessorKey: "LastName",
+    accessorKey: "person.LastName",
     header: "Last Name",
   },
   {
@@ -39,43 +39,50 @@ export const columns: ColumnDef<Teacher>[] = [
   {
     accessorKey: "PhoneNum",
     header: "Phone",
-  },
-  {
+  },  {
     id: "actions",
     cell: ({ row }) => {
       const teacher = row.original;
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(teacher.TeacherID)}
-            >
-              Copy teacher ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />            <DropdownMenuItem asChild>
-              <EditTeacherDialog teacher={teacher} />
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href={`/teachers/${teacher.TeacherID}`}>View details</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                await deleteTeacher(teacher.TeacherID);
-              }}
-            >
-              Delete teacher
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <TeacherActionsCell teacher={teacher} />;
     },
   },
 ];
+
+function TeacherActionsCell({ teacher }: { teacher: TeacherWithPerson }) {
+  return (
+    <div className="flex justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => navigator.clipboard.writeText(teacher.TeacherID)}
+          >
+            Copy teacher ID
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <a href={`/teachers/${teacher.TeacherID}`}>View details</a>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={async () => {
+              await deleteTeacher(teacher.TeacherID);
+            }}
+          >
+            Delete teacher
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      
+      <div className="ml-2">
+        <EditTeacherDialog teacher={teacher} />
+      </div>
+    </div>
+  );
+}

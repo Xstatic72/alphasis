@@ -19,10 +19,16 @@ export async function createSubject(values: z.infer<typeof subjectSchema>) {
       message: "Invalid data provided.",
     }
   }
-
   try {
+    // Generate SubjectID
+    const count = await prisma.subject.count();
+    const subjectId = `SUB${String(count + 1).padStart(3, '0')}`;
+
     await prisma.subject.create({
-      data: validatedFields.data,
+      data: {
+        ...validatedFields.data,
+        SubjectID: subjectId
+      },
     })
 
     revalidatePath('/subjects')

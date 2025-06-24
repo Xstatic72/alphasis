@@ -151,17 +151,8 @@ export default function TeacherDashboard() {
             onClick={() => router.push('/teacher')}
             variant="outline"
             className="flex items-center gap-2 hover:bg-green-50 border-green-300"
-          >
-            <ArrowLeft className="h-4 w-4" />
+          >            <ArrowLeft className="h-4 w-4" />
             Back to Main Dashboard
-          </Button>
-          <Button 
-            onClick={() => router.push('/teacher')}
-            variant="ghost"
-            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
-          >
-            <Home className="h-4 w-4" />
-            Teacher Home
           </Button>
         </div>
 

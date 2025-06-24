@@ -31,18 +31,16 @@ export default function StudentDashboard() {
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (!data) return <div>Error loading data</div>;
-
   const gradeColumns = [
-    { accessorKey: "Subject.SubjectName", header: "Subject" },
+    { accessorKey: "subject.SubjectName", header: "Subject" },
     { accessorKey: "Term", header: "Term" },
     { accessorKey: "CA", header: "CA (40)" },
     { accessorKey: "Exam", header: "Exam (60)" },
     { accessorKey: "TotalScore", header: "Total" },
     { accessorKey: "Grade", header: "Grade" }
   ];
-
   const attendanceColumns = [
-    { accessorKey: "Subject.SubjectName", header: "Subject" },
+    { accessorKey: "subject.SubjectName", header: "Subject" },
     { accessorKey: "Date", header: "Date" },
     { accessorKey: "Status", header: "Status" }
   ];
@@ -76,11 +74,10 @@ export default function StudentDashboard() {
             <User className="h-12 w-12 text-blue-600" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-              <p className="text-lg text-gray-600">Welcome back, {data.user.name}</p>
-              {data.user.studentProfile && (
+              <p className="text-lg text-gray-600">Welcome back, {data.user.name}</p>              {data.user.studentProfile && (
                 <p className="text-sm text-gray-500">
                   Admission Number: {data.user.studentProfile.AdmissionNumber} | 
-                  Class: {data.user.studentProfile.Class?.ClassName}
+                  Class: {data.user.studentProfile.Renamedclass?.ClassName || 'Not Assigned'}
                 </p>
               )}
             </div>
@@ -125,12 +122,11 @@ export default function StudentDashboard() {
           <h2 className="text-2xl font-bold mb-4 flex items-center">
             <BookOpen className="mr-3 h-6 w-6" />
             My Grades
-          </h2>
-          <DataTable 
+          </h2>          <DataTable 
             columns={gradeColumns} 
             data={data.grades} 
             searchPlaceholder="Search subjects..."
-            searchColumn="Subject.SubjectName"
+            searchColumn="subject.SubjectName"
           />
         </div>
 

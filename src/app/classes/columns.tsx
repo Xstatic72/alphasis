@@ -26,39 +26,45 @@ export const columns: ColumnDef<Class>[] = [
     accessorKey: "ClassName",
     header: "Class Name",  },
   {
-    id: "actions",
-    cell: ({ row }) => {
+    id: "actions",    cell: ({ row }) => {
       const classData = row.original;
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(classData.ClassID)}
-            >
-              Copy class ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <EditClassDialog class={classData} />
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                await deleteClass(classData.ClassID);
-              }}
-            >
-              Delete class
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <ClassActionsCell class={classData} />;
     },
   },
 ];
+
+function ClassActionsCell({ class: classData }: { class: Class }) {
+  return (
+    <div className="flex justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => navigator.clipboard.writeText(classData.ClassID)}
+          >
+            Copy class ID
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={async () => {
+              await deleteClass(classData.ClassID);
+            }}
+          >
+            Delete class
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      
+      <div className="ml-2">
+        <EditClassDialog class={classData} />
+      </div>
+    </div>
+  );
+}

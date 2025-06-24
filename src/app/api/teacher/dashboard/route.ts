@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
@@ -36,23 +36,22 @@ export async function GET() {
       },
       orderBy: { AdmissionNumber: 'asc' }
     });
-    console.log('Students:', subjects);
+  
 
     // Get corresponding person data for students using raw query if needed
     const studentsWithNames = await Promise.all(
-      students.map(async (student) => {
-        try {
-          const person = await prisma.$queryRaw`
+      students.map(async (student) => {        try {
+          const personResult = await prisma.$queryRaw`
             SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as any[];
+          ` as { FirstName: string; LastName: string }[];
           
           return {
             ...student,
-            FirstName: person[0]?.FirstName || '',
-            LastName: person[0]?.LastName || '',
-            FullName: person[0] ? `${person[0].FirstName} ${person[0].LastName}` : student.AdmissionNumber
+            FirstName: personResult[0]?.FirstName || '',
+            LastName: personResult[0]?.LastName || '',
+            FullName: personResult[0] ? `${personResult[0].FirstName} ${personResult[0].LastName}` : student.AdmissionNumber
           };
-        } catch (error) {
+        } catch {
           return {
             ...student,
             FirstName: '',
@@ -62,9 +61,22 @@ export async function GET() {
         }
       })
     );    // Get recent grades for subjects this teacher teaches
-    let grades: any[] = [];
+    let grades: {
+      GradeID: string;
+      StudentID: string;
+      SubjectID: string;
+      Term: string;
+      CA: number | null;
+      Exam: number | null;
+      TotalScore: number | null;
+      Grade: string | null;
+      StudentName: string;
+      SubjectName: string;
+      Student: { FirstName: string; LastName: string };
+      Subject: { SubjectName: string };
+    }[] = [];
     if (subjects.length > 0) {
-      console.log('Looking for grades for subjects:', subjects.map(s => s.SubjectID));
+      
       const gradesRaw = await prisma.grade.findMany({
         where: {
           SubjectID: {
@@ -74,14 +86,13 @@ export async function GET() {
         orderBy: { Term: 'desc' },
         take: 50
       });
-      console.log('Found grades:', gradesRaw.length);
+      
 
       // Get student and subject names for each grade
       grades = await Promise.all(
-        gradesRaw.map(async (grade) => {
-          try {
+        gradesRaw.map(async (grade) => {          try {
             const [studentResult, subjectResult] = await Promise.all([
-              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}` as Promise<any[]>,
+              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}` as Promise<{ FirstName: string; LastName: string }[]>,
               prisma.subject.findUnique({ where: { SubjectID: grade.SubjectID } })
             ]);
             
@@ -101,7 +112,7 @@ export async function GET() {
                 SubjectName: subjectResult?.SubjectName || 'Unknown Subject'
               }
             };
-          } catch (error) {
+          } catch {
             return {
               ...grade,
               StudentName: 'Unknown Student',
@@ -113,7 +124,17 @@ export async function GET() {
         })
       );
     }    // Get recent attendance for subjects this teacher teaches
-    let attendance: any[] = [];
+    let attendance: {
+      AttendanceID: string;
+      StudentID: string;
+      SubjectID: string;
+      Date: Date;
+      Status: string;
+      StudentName: string;
+      SubjectName: string;
+      Student: { FirstName: string; LastName: string };
+      Subject: { SubjectName: string };
+    }[] = [];
     if (subjects.length > 0) {
       console.log('Looking for attendance for subjects:', subjects.map(s => s.SubjectID));
       const attendanceRaw = await prisma.attendance.findMany({
@@ -130,10 +151,9 @@ export async function GET() {
 
       // Get student and subject names for each attendance record
       attendance = await Promise.all(
-        attendanceRaw.map(async (att) => {
-          try {
+        attendanceRaw.map(async (att) => {          try {
             const [studentResult, subjectResult] = await Promise.all([
-              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${att.StudentID}` as Promise<any[]>,
+              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${att.StudentID}` as Promise<{ FirstName: string; LastName: string }[]>,
               prisma.subject.findUnique({ where: { SubjectID: att.SubjectID } })
             ]);
             
@@ -145,7 +165,7 @@ export async function GET() {
               ...att,
               StudentName: studentName,
               SubjectName: subjectResult?.SubjectName || 'Unknown Subject',
-              Status: att.Status === '1' ? 'Present' : 'Absent',
+              Status: att.Status === 'PRESENT' ? 'Present' : 'Absent',
               Student: {
                 FirstName: studentResult[0]?.FirstName || '',
                 LastName: studentResult[0]?.LastName || ''
@@ -154,12 +174,12 @@ export async function GET() {
                 SubjectName: subjectResult?.SubjectName || 'Unknown Subject'
               }
             };
-          } catch (error) {
+          } catch {
             return {
               ...att,
               StudentName: 'Unknown Student',
               SubjectName: 'Unknown Subject',
-              Status: att.Status === '1' ? 'Present' : 'Absent',
+              Status: att.Status === 'PRESENT' ? 'Present' : 'Absent',
               Student: { FirstName: '', LastName: '' },
               Subject: { SubjectName: 'Unknown Subject' }
             };

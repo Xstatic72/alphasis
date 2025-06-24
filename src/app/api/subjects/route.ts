@@ -22,38 +22,42 @@ async function authenticate(request: NextRequest, allowedRoles: string[] = []) {
 export async function GET(request: NextRequest) {
   try {
     const session = await authenticate(request);
-    
-    if (session.role === 'TEACHER') {
-      // Get teacher's subjects
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        include: { teacherProfile: true }
+      if (session.role === 'TEACHER') {
+      // Get teacher's subjects using PersonID
+      const person = await prisma.person.findUnique({
+        where: { PersonID: session.userId },
+        include: { teacher: true }
       });
 
-      if (!user?.teacherProfile) {
+      if (!person?.teacher) {
         return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
-      }
-
-      const subjects = await prisma.subject.findMany({
-        where: { TeacherID: user.teacherProfile.TeacherID },
-        include: { Teacher: true }
+      }      const subjects = await prisma.subject.findMany({
+        where: { TeacherID: person.teacher.TeacherID },
+        include: { 
+          teacher: {
+            include: { person: true }
+          }
+        }
       });
 
       return NextResponse.json({ subjects });
-    }
-
-    if (session.role === 'STUDENT') {
-      // Get all available subjects for registration
+    }    if (session.role === 'STUDENT') {      // Get all available subjects for registration
       const subjects = await prisma.subject.findMany({
-        include: { Teacher: true }
+        include: { 
+          teacher: {
+            include: { person: true }
+          }
+        }
       });
 
       return NextResponse.json({ subjects });
-    }
-
-    // For other roles, return all subjects
+    }    // For other roles, return all subjects
     const subjects = await prisma.subject.findMany({
-      include: { Teacher: true }
+      include: { 
+        teacher: {
+          include: { person: true }
+        }
+      }
     });
 
     return NextResponse.json({ subjects });
@@ -73,15 +77,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await authenticate(request, ['TEACHER']);
-    const subjectData = await request.json();
-
-    // Get teacher profile
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { teacherProfile: true }
+    const subjectData = await request.json();    // Get teacher profile
+    const person = await prisma.person.findUnique({
+      where: { PersonID: session.userId },
+      include: { teacher: true }
     });
 
-    if (!user?.teacherProfile) {
+    if (!person?.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
@@ -97,16 +99,14 @@ export async function POST(request: NextRequest) {
     if (!subjectData.SubjectID) {
       const count = await prisma.subject.count();
       subjectData.SubjectID = `SUB${String(count + 1).padStart(3, '0')}`;
-    }
-
-    const subject = await prisma.subject.create({
+    }    const subject = await prisma.subject.create({
       data: {
         SubjectID: subjectData.SubjectID,
         SubjectName: subjectData.SubjectName,
         ClassLevel: subjectData.ClassLevel,
-        TeacherID: user.teacherProfile.TeacherID
+        TeacherID: person.teacher.TeacherID
       },
-      include: { Teacher: true }
+      include: { teacher: true }
     });
 
     return NextResponse.json({ subject }, { status: 201 });
@@ -130,15 +130,13 @@ export async function PUT(request: NextRequest) {
 
     if (!subjectId) {
       return NextResponse.json({ error: 'Subject ID is required' }, { status: 400 });
-    }
-
-    // Verify teacher owns this subject
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { teacherProfile: true }
+    }    // Verify teacher owns this subject
+    const person = await prisma.person.findUnique({
+      where: { PersonID: session.userId },
+      include: { teacher: true }
     });
 
-    if (!user?.teacherProfile) {
+    if (!person?.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
@@ -146,14 +144,14 @@ export async function PUT(request: NextRequest) {
       where: { SubjectID: subjectId }
     });
 
-    if (!existingSubject || existingSubject.TeacherID !== user.teacherProfile.TeacherID) {
+    if (!existingSubject || existingSubject.TeacherID !== person.teacher.TeacherID) {
       return NextResponse.json({ error: 'Subject not found or access denied' }, { status: 404 });
     }
 
     const subject = await prisma.subject.update({
       where: { SubjectID: subjectId },
       data: updateData,
-      include: { Teacher: true }
+      include: { teacher: true }
     });
 
     return NextResponse.json({ subject });
@@ -178,15 +176,13 @@ export async function DELETE(request: NextRequest) {
 
     if (!subjectId) {
       return NextResponse.json({ error: 'Subject ID is required' }, { status: 400 });
-    }
-
-    // Verify teacher owns this subject
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { teacherProfile: true }
+    }    // Verify teacher owns this subject
+    const person = await prisma.person.findUnique({
+      where: { PersonID: session.userId },
+      include: { teacher: true }
     });
 
-    if (!user?.teacherProfile) {
+    if (!person?.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
@@ -194,7 +190,7 @@ export async function DELETE(request: NextRequest) {
       where: { SubjectID: subjectId }
     });
 
-    if (!existingSubject || existingSubject.TeacherID !== user.teacherProfile.TeacherID) {
+    if (!existingSubject || existingSubject.TeacherID !== person.teacher.TeacherID) {
       return NextResponse.json({ error: 'Subject not found or access denied' }, { status: 404 });
     }
 

@@ -14,10 +14,10 @@ type Subject = {
   SubjectID: string;
   SubjectName: string;
   ClassLevel: string;
-  Teacher: {
+  teacher: {
     FirstName: string;
     LastName: string;
-  };
+  } | null;
 };
 
 type TeacherSubjectsData = {
@@ -26,6 +26,7 @@ type TeacherSubjectsData = {
 };
 
 export default function TeacherSubjectsPage() {
+  const router = useRouter();
   const [data, setData] = useState<TeacherSubjectsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -141,16 +142,7 @@ export default function TeacherSubjectsPage() {
             variant="outline"
             className="flex items-center gap-2 hover:bg-green-50 border-green-300"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <Button 
-            onClick={() => router.push('/teacher')}
-            variant="ghost"
-            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
-          >
-            <Home className="h-4 w-4" />
-            Teacher Home
+            <ArrowLeft className="h-4 w-4" />            Back to Dashboard
           </Button>
         </div>
 
@@ -213,14 +205,14 @@ export default function TeacherSubjectsPage() {
                 {editingSubject ? 'Edit Subject' : 'Add New Subject'}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={editingSubject ? handleUpdateSubject : handleAddSubject} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent>              <form onSubmit={editingSubject ? handleUpdateSubject : handleAddSubject} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="subjectName">Subject Name</Label>
                   <Input
                     id="subjectName"
                     value={newSubjectForm.SubjectName}
                     onChange={(e) => setNewSubjectForm(prev => ({...prev, SubjectName: e.target.value}))}
+                    className="mt-3"
                     required
                   />
                 </div>
@@ -228,7 +220,7 @@ export default function TeacherSubjectsPage() {
                   <Label htmlFor="classLevel">Class Level</Label>
                   <select
                     id="classLevel"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md mt-3"
                     value={newSubjectForm.ClassLevel}
                     onChange={(e) => setNewSubjectForm(prev => ({...prev, ClassLevel: e.target.value}))}
                     required
@@ -289,9 +281,8 @@ export default function TeacherSubjectsPage() {
               {(data?.allSubjects || []).map((subject) => (
                 <div key={subject.SubjectID} className="border border-gray-200 rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
                   <h3 className="font-semibold text-lg text-gray-900">{subject.SubjectName}</h3>
-                  <p className="text-sm text-gray-600">Level: {subject.ClassLevel}</p>
-                  <p className="text-sm text-gray-500">
-                    Teacher: {subject.Teacher.FirstName} {subject.Teacher.LastName}
+                  <p className="text-sm text-gray-600">Level: {subject.ClassLevel}</p>                  <p className="text-sm text-gray-500">
+                    Teacher: {subject.teacher ? `${subject.teacher.FirstName} ${subject.teacher.LastName}` : 'Not assigned'}
                   </p>
                 </div>
               ))}

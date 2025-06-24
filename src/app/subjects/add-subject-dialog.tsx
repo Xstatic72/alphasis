@@ -25,6 +25,7 @@ import { createSubject } from "./actions"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Plus, BookOpen } from "lucide-react"
+import { useState } from "react"
 
 const subjectSchema = z.object({
   SubjectName: z.string().min(2, { message: "Subject name must be at least 2 characters." }),
@@ -33,6 +34,8 @@ const subjectSchema = z.object({
 })
 
 export function AddSubjectDialog() {
+  const [open, setOpen] = useState(false);
+  
   const form = useForm<z.infer<typeof subjectSchema>>({
     resolver: zodResolver(subjectSchema),
     defaultValues: {
@@ -41,7 +44,6 @@ export function AddSubjectDialog() {
       TeacherID: "",
     },
   })
-
   async function onSubmit(values: z.infer<typeof subjectSchema>) {
     const result = await createSubject(values)
     if (result.success) {
@@ -49,13 +51,13 @@ export function AddSubjectDialog() {
         description: "The new subject has been added to the system.",
       })
       form.reset()
+      setOpen(false)
     } else {
       toast.error(result.message)
     }
   }
-
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div
           whileHover={{ scale: 1.02 }}

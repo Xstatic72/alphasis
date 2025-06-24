@@ -20,10 +20,42 @@ export async function createTeacher(values: z.infer<typeof teacherSchema>) {
       message: 'Invalid data provided.',
     }
   }
-
   try {
+    // Generate a unique teacher ID
+    const generateTeacherId = () => {
+      return `TCH${Math.random().toString(36).substr(2, 7).toUpperCase()}`;
+    };
+    
+    let teacherId = generateTeacherId();
+    
+    // Ensure the ID is unique
+    let existingTeacher = await prisma.teacher.findUnique({
+      where: { TeacherID: teacherId }
+    });
+    
+    while (existingTeacher) {
+      teacherId = generateTeacherId();
+      existingTeacher = await prisma.teacher.findUnique({
+        where: { TeacherID: teacherId }
+      });
+    }
+
+    // Create person record first
+    await prisma.person.create({
+      data: {
+        PersonID: teacherId,
+        FirstName: validatedFields.data.FirstName,
+        LastName: validatedFields.data.LastName
+      }
+    });
+
+    // Create teacher record
     await prisma.teacher.create({
-      data: validatedFields.data,
+      data: {
+        TeacherID: teacherId,
+        Email: validatedFields.data.Email,
+        PhoneNum: validatedFields.data.PhoneNum,
+      },
     })
 
     revalidatePath('/teachers')
@@ -51,11 +83,23 @@ export async function updateTeacher(
       message: 'Invalid data provided.',
     }
   }
-
   try {
+    // Update person record
+    await prisma.person.update({
+      where: { PersonID: id },
+      data: {
+        FirstName: validatedFields.data.FirstName,
+        LastName: validatedFields.data.LastName
+      }
+    });
+
+    // Update teacher record
     await prisma.teacher.update({
       where: { TeacherID: id },
-      data: validatedFields.data,
+      data: {
+        Email: validatedFields.data.Email,
+        PhoneNum: validatedFields.data.PhoneNum,
+      },
     })
 
     revalidatePath('/teachers')

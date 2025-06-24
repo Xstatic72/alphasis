@@ -38,7 +38,7 @@ export function EditSubjectDialog({ subject }: { subject: Subject }) {  const fo
     defaultValues: {
       SubjectName: subject.SubjectName,
       ClassLevel: subject.ClassLevel,
-      TeacherID: subject.TeacherID,
+      TeacherID: subject.TeacherID || undefined,
     },
   })
   async function onSubmit(values: z.infer<typeof subjectSchema>) {

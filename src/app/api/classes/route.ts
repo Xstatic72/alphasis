@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   try {
     await authenticate(request);
     
-    const classes = await prisma.class.findMany({
+    const classes = await prisma.renamedclass.findMany({
       orderBy: { ClassName: 'asc' }
     });
 
@@ -44,14 +44,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await authenticate(request, ['TEACHER']);
-    const classData = await request.json();
-
-    if (!classData.ClassName) {
-      return NextResponse.json({ error: 'Class name is required' }, { status: 400 });
+    const classData = await request.json();    if (!classData.ClassName || !classData.ClassID) {
+      return NextResponse.json({ error: 'Class name and ID are required' }, { status: 400 });
     }
 
-    const newClass = await prisma.class.create({
+    const newClass = await prisma.renamedclass.create({
       data: {
+        ClassID: classData.ClassID,
         ClassName: classData.ClassName
       }
     });
@@ -79,7 +78,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Class ID is required' }, { status: 400 });
     }
 
-    const updatedClass = await prisma.class.update({
+    const updatedClass = await prisma.renamedclass.update({
       where: { ClassID: classId },
       data: updateData
     });
@@ -122,7 +121,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    await prisma.class.delete({
+    await prisma.renamedclass.delete({
       where: { ClassID: classId }
     });
 

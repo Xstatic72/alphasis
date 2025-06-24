@@ -26,15 +26,14 @@ type Grade = {
   GradeID: string;
   StudentID: string;
   SubjectID: string;
-  Term: string;
-  TotalScore: number;
+  Term: string;  TotalScore: number;
   Grade: string;
-  Student: {
+  student: {
     FirstName: string;
     LastName: string;
     AdmissionNumber: string;
   };
-  Subject: {
+  subject: {
     SubjectName: string;
   };
 };
@@ -185,16 +184,31 @@ export default function TeacherGradesPage() {
     const matchesTerm = grade.Term === selectedTerm;
     
     return matchesSubject && matchesTerm;
-  });
-
-  const gradeColumns = [
-    { accessorKey: "Student.AdmissionNumber", header: "Admission No." },
+  });  const gradeColumns = [
     { 
-      accessorKey: "Student.FirstName", 
-      header: "Student Name",
-      cell: ({ row }: any) => `${row.original.Student.FirstName} ${row.original.Student.LastName}`
+      accessorKey: "student.AdmissionNumber", 
+      header: "Admission No.",
+      cell: ({ row }: any) => {
+        const student = row.original.student;
+        return student ? student.AdmissionNumber || 'N/A' : 'Unknown';
+      }
     },
-    { accessorKey: "Subject.SubjectName", header: "Subject" },
+    { 
+      accessorKey: "student.FirstName", 
+      header: "Student Name",
+      cell: ({ row }: any) => {
+        const student = row.original.student;
+        return student ? `${student.FirstName || ''} ${student.LastName || ''}`.trim() : 'Unknown Student';
+      }
+    },
+    { 
+      accessorKey: "subject.SubjectName", 
+      header: "Subject",
+      cell: ({ row }: any) => {
+        const subject = row.original.subject;
+        return subject ? subject.SubjectName || 'N/A' : 'Unknown Subject';
+      }
+    },
     { accessorKey: "Term", header: "Term" },
     { accessorKey: "TotalScore", header: "Score" },
     { 
@@ -236,16 +250,7 @@ export default function TeacherGradesPage() {
             className="flex items-center gap-2 hover:bg-green-50 border-green-300"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Main Dashboard
-          </Button>
-          <Button 
-            onClick={() => router.push('/teacher')}
-            variant="ghost"
-            className="flex items-center gap-2 text-green-700 hover:bg-green-50"
-          >
-            <Home className="h-4 w-4" />
-            Teacher Home
-          </Button>
+            Back to Main Dashboard          </Button>
         </div>
 
         {/* Header */}
@@ -337,10 +342,9 @@ export default function TeacherGradesPage() {
                         onChange={(e) => setNewGradeForm(prev => ({...prev, StudentID: e.target.value}))}
                         required
                       >
-                        <option value="">Select Student</option>
-                        {(data?.students || []).map((student: any) => (
+                        <option value="">Select Student</option>                        {(data?.students || []).map((student: any) => (
                           <option key={student.AdmissionNumber} value={student.AdmissionNumber}>
-                            {student.FirstName} {student.LastName} ({student.AdmissionNumber})
+                            {student.FirstName || ''} {student.LastName || ''} ({student.AdmissionNumber})
                           </option>
                         ))}
                       </select>
@@ -377,8 +381,7 @@ export default function TeacherGradesPage() {
                     <option value="2nd Term">2nd Term</option>
                     <option value="3rd Term">3rd Term</option>
                   </select>
-                </div>
-                <div>
+                </div>                <div>
                   <Label htmlFor="score">Total Score (0-100)</Label>
                   <Input
                     id="score"
@@ -387,6 +390,7 @@ export default function TeacherGradesPage() {
                     max="100"
                     value={newGradeForm.TotalScore}
                     onChange={(e) => setNewGradeForm(prev => ({...prev, TotalScore: e.target.value}))}
+                    className="mt-3"
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
@@ -468,12 +472,10 @@ export default function TeacherGradesPage() {
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-900">Grades List</CardTitle>
           </CardHeader>
-          <CardContent>
-            <DataTable 
+          <CardContent>            <DataTable 
               columns={gradeColumns} 
               data={filteredGrades} 
-              searchColumn="Student.FirstName"
-              searchPlaceholder="Search by student name..."
+              searchPlaceholder="Search grades..."
             />
           </CardContent>
         </Card>

@@ -25,30 +25,32 @@ import { createClass } from "./actions"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Plus, GraduationCap } from "lucide-react"
+import { useState } from "react"
 
 const classSchema = z.object({
   ClassName: z.string().min(2, { message: "Class name must be at least 2 characters." }),
 })
 
 export function AddClassDialog() {
+  const [open, setOpen] = useState(false);
+  
   const form = useForm<z.infer<typeof classSchema>>({
     resolver: zodResolver(classSchema),
     defaultValues: {
       ClassName: "",
     },
   })
-
   async function onSubmit(values: z.infer<typeof classSchema>) {
     const result = await createClass(values)
     if (result.success) {
       toast.success("Class created successfully!")
       form.reset()
+      setOpen(false)
     } else {
       toast.error(result.message)
     }
-  }
-  return (
-    <Dialog>
+  }  return (
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div
           whileHover={{ scale: 1.02 }}

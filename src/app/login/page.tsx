@@ -96,15 +96,14 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
+          <form onSubmit={handleLogin} className="space-y-6">            <div>
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1"
+                className="mt-3"
                 placeholder="Enter username"
                 required
               />
@@ -117,7 +116,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
+                className="mt-3"
                 placeholder="Enter password"
                 required
               />
@@ -149,7 +148,7 @@ export default function LoginPage() {
                     {user.role === 'PARENT' && <Users className="h-5 w-5 text-blue-500" />}
                     {user.role === 'STUDENT' && <BookOpen className="h-5 w-5 text-orange-500" />}
                     <div>
-                      <div className="font-medium">{user.FirstName} {user.LastName}</div>
+                      <div className="font-medium">{user.FirstName || ''} {user.LastName || ''}</div>
                       <div className="text-sm text-gray-500">
                         {user.PersonID} • {user.role.toLowerCase()}
                       </div>

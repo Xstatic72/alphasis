@@ -25,6 +25,7 @@ import { createTeacher } from "./actions"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Plus, UserPlus, User, Mail, Phone } from "lucide-react"
+import { useState } from "react"
 
 const teacherSchema = z.object({
   FirstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
@@ -33,7 +34,10 @@ const teacherSchema = z.object({
   PhoneNum: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
 })
 
-export function AddTeacherDialog() {  const form = useForm<z.infer<typeof teacherSchema>>({
+export function AddTeacherDialog() {
+  const [open, setOpen] = useState(false);
+  
+  const form = useForm<z.infer<typeof teacherSchema>>({
     resolver: zodResolver(teacherSchema),
     defaultValues: {
       FirstName: "",
@@ -42,18 +46,17 @@ export function AddTeacherDialog() {  const form = useForm<z.infer<typeof teache
       PhoneNum: "",
     },
   })
-
   async function onSubmit(values: z.infer<typeof teacherSchema>) {
     const result = await createTeacher(values)
     if (result.success) {
       toast.success("Teacher created successfully!")
       form.reset()
+      setOpen(false)
     } else {
       toast.error(result.message)
     }
-  }
-  return (
-    <Dialog>
+  }  return (
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div
           whileHover={{ scale: 1.02 }}

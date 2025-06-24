@@ -1,22 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
 import { AddStudentDialog } from "./add-student-dialog";
 import { EnhancedAddStudentDialog } from "@/components/forms/enhanced-add-student-dialog";
 import { Users } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-type PrismaStudent = {
-  AdmissionNumber: string;
-  FirstName: string;
-  LastName: string;
-  DateOfBirth: Date;
-  Gender: string;
-  ParentContact: string;
-  Address: string;
-  StudentClassID: string;
-}
-
-type FormattedStudent = {
+type Student = {
   AdmissionNumber: string;
   FirstName: string;
   LastName: string;
@@ -27,19 +16,50 @@ type FormattedStudent = {
   StudentClassID: string;
 }
 
+async function getStudents(): Promise<Student[]> {
+  try {
+    // Use direct Prisma query instead of fetch
+    const students = await prisma.student.findMany({
+      include: {
+        Renamedclass: true
+      },
+      orderBy: { AdmissionNumber: 'asc' }
+    });
+
+    // Get person data for each student
+    const studentsWithPersons = await Promise.all(
+      students.map(async (student) => {
+        const person = await prisma.person.findUnique({
+          where: { PersonID: student.AdmissionNumber }
+        });
+
+        return {
+          AdmissionNumber: student.AdmissionNumber,
+          FirstName: person?.FirstName || '',
+          LastName: person?.LastName || '',
+          DateOfBirth: new Date(student.DateOfBirth).toISOString().split('T')[0],
+          Gender: student.Gender === 'M' ? 'Male' : 'Female',
+          ParentContact: student.ParentContact || '',
+          Address: student.Address || '',
+          StudentClassID: student.StudentClassID,
+        };
+      })
+    );
+
+    return studentsWithPersons;
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    return [];
+  }
+}
+
 export default async function StudentsPage() {
-  const studentsData = await prisma.student.findMany();
-    // Convert Date objects to strings for the DataTable
-  const students: FormattedStudent[] = studentsData.map((student: PrismaStudent) => ({
-    ...student,
-    DateOfBirth: student.DateOfBirth.toISOString().split('T')[0], // Format as YYYY-MM-DD
-  }));
+  const students = await getStudents();
 
   return (
     <div className="min-h-full bg-main-gradient">
-      <div className="page-container animate-slide-in-up">
-        {/* Page Header with enhanced styling */}
-        <div className="section-header">
+      <div className="page-container animate-slide-in-up">        {/* Page Header with enhanced styling */}
+        <div className="section-header" id="add-student-section">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-4">              <div className="icon-container animate-float shadow-aerospace-enhanced">
                 <Users className="h-8 w-8 text-white" />
@@ -65,12 +85,11 @@ export default async function StudentsPage() {
 
         {/* Enhanced Data Table Card */}
         <div className="content-card hover-lift">
-          <div className="data-table-container">
-            <DataTable 
+          <div className="data-table-container">            <DataTable 
               columns={columns} 
               data={students} 
-              searchPlaceholder="Search students by name..."
-              searchColumn="FirstName"
+              searchPlaceholder="Search students by name or admission number..."
+              globalSearch={true}
             />
           </div>
         </div>

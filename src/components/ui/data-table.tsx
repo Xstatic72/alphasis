@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchPlaceholder?: string;
   searchColumn?: string;
+  globalSearch?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -45,12 +46,13 @@ export function DataTable<TData, TValue>({
   data = [], // Provide default empty array
   searchPlaceholder = "Search...",
   searchColumn,
+  globalSearch = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const table = useReactTable({
+  const [globalFilter, setGlobalFilter] = React.useState("");  const table = useReactTable({
     data: data || [], // Ensure data is never undefined
     columns,
     onSortingChange: setSorting,
@@ -61,20 +63,26 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
-  });
-  // Use the first searchable column if no searchColumn is specified
+  });  // Use the first searchable column if no searchColumn is specified
   const getFirstAccessorColumn = () => {
     const accessorColumn = columns.find(col => 'accessorKey' in col && col.accessorKey);
     return accessorColumn ? (accessorColumn as any).accessorKey : undefined;
   };
   
   const defaultSearchColumn = searchColumn || getFirstAccessorColumn();
+  
+  // Ensure the column exists before using it
+  const searchColumnExists = defaultSearchColumn && table.getColumn(defaultSearchColumn);
+  const shouldUseGlobalSearch = globalSearch || !searchColumnExists;
 
   return (
     <motion.div
@@ -88,13 +96,16 @@ export function DataTable<TData, TValue>({
         <div className="relative flex-1 max-w-md group">
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-orange-500" />
-            <Input
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-orange-500" />            <Input
               placeholder={searchPlaceholder}
-              value={(table.getColumn(defaultSearchColumn)?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn(defaultSearchColumn)?.setFilterValue(event.target.value)
-              }
+              value={shouldUseGlobalSearch ? globalFilter : (table.getColumn(defaultSearchColumn)?.getFilterValue() as string) ?? ""}
+              onChange={(event) => {
+                if (shouldUseGlobalSearch) {
+                  setGlobalFilter(event.target.value);
+                } else {
+                  table.getColumn(defaultSearchColumn)?.setFilterValue(event.target.value);
+                }
+              }}
               className="pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:border-orange-400 focus:ring-4 focus:ring-orange-100 transition-all duration-300 text-gray-900 placeholder-gray-500 font-medium shadow-lg"
             />
           </div>

@@ -19,20 +19,35 @@ export async function PUT(request: NextRequest) {
 
     const { admissionNumber, FirstName, LastName, DateOfBirth, Gender, ParentContact, Address, StudentClassID } = await request.json();
 
-    // Update student
-    const updatedStudent = await prisma.student.update({
+    // First, find the student to get the PersonID (which should be the same as AdmissionNumber)
+    const student = await prisma.student.findUnique({
       where: { AdmissionNumber: admissionNumber },
+      select: { AdmissionNumber: true }
+    });
+
+    if (!student) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+
+    // Update person record first
+    await prisma.person.update({
+      where: { PersonID: admissionNumber }, // PersonID should match AdmissionNumber
       data: {
         FirstName,
-        LastName,
-        DateOfBirth: new Date(DateOfBirth),
+        LastName
+      }
+    });
+
+    // Update student record
+    const updatedStudent = await prisma.student.update({
+      where: { AdmissionNumber: admissionNumber },
+      data: {        DateOfBirth: new Date(DateOfBirth),
         Gender,
         ParentContact,
         Address,
-        ...(StudentClassID && { StudentClassID })
-      },
+        ...(StudentClassID && { StudentClassID })      },
       include: {
-        Class: true
+        Renamedclass: true
       }
     });
 

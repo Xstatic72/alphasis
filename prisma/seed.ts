@@ -6,7 +6,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Create classes first
-  const jss1 = await prisma.class.upsert({
+  const jss1 = await prisma.renamedclass.upsert({
     where: { ClassID: 'jss1' },
     update: {},
     create: {
@@ -15,7 +15,7 @@ async function main() {
     }
   });
 
-  const jss2 = await prisma.class.upsert({
+  const jss2 = await prisma.renamedclass.upsert({
     where: { ClassID: 'jss2' },
     update: {},
     create: {
@@ -24,7 +24,7 @@ async function main() {
     }
   });
 
-  const sss1 = await prisma.class.upsert({
+  const sss1 = await prisma.renamedclass.upsert({
     where: { ClassID: 'sss1' },
     update: {},
     create: {
@@ -32,154 +32,154 @@ async function main() {
       ClassName: 'SSS1'
     }
   });
-  // Create admin user (changed to parent role)
-  const parentUser = await prisma.user.upsert({
-    where: { username: 'parent1' },
+
+  // Create person records first
+  const parentPerson = await prisma.person.upsert({
+    where: { PersonID: 'par001' },
     update: {},
     create: {
-      username: 'parent1',
-      password: 'parent123',
-      role: 'PARENT',
-      name: 'Mary Johnson',
-      email: 'mary.johnson@parent.alphasis.edu'
+      PersonID: 'par001',
+      FirstName: 'Mary',
+      LastName: 'Johnson'
     }
   });
 
   // Create parent profile
-  const parent = await prisma.parent.upsert({
-    where: { ParentID: 'parent001' },
+  const parentUser = await prisma.parent.upsert({
+    where: { ParentID: 'par001' },
     update: {},
     create: {
-      ParentID: 'parent001',
-      FirstName: 'Mary',
-      LastName: 'Johnson',
-      PhoneNum: '+234-802-345-6789',
-      Email: 'mary.johnson@parent.alphasis.edu',
-      Address: '123 School Street, Lagos',
-      userId: parentUser.id
+      ParentID: 'par001',
+      ContactNumber: '08012345678'
     }
   });
 
-  // Create teacher and their profile
-  const teacherUser = await prisma.user.upsert({
-    where: { username: 'teacher1' },
+  // Create teacher person
+  const teacherPerson = await prisma.person.upsert({
+    where: { PersonID: 'tch001' },
     update: {},
     create: {
-      username: 'teacher1',
-      password: 'teacher123',
-      role: 'TEACHER',
-      name: 'John Smith',
-      email: 'john.smith@alphasis.edu'
-    }
-  });
-
-  const teacher = await prisma.teacher.upsert({
-    where: { TeacherID: 'teacher001' },
-    update: {},
-    create: {
-      TeacherID: 'teacher001',
+      PersonID: 'tch001',
       FirstName: 'John',
-      LastName: 'Smith',
-      PhoneNum: '+234-801-234-5678',
-      Email: 'john.smith@alphasis.edu',
-      userId: teacherUser.id
+      LastName: 'Smith'
     }
   });
 
-  // Create student and their profile
-  const studentUser = await prisma.user.upsert({
-    where: { username: 'student1' },
+  // Create teacher profile
+  const teacherUser = await prisma.teacher.upsert({
+    where: { TeacherID: 'tch001' },
     update: {},
     create: {
-      username: 'student1',
-      password: 'student123',
-      role: 'STUDENT',
-      name: 'Alice Johnson',
-      email: 'alice.johnson@student.alphasis.edu'
+      TeacherID: 'tch001',
+      PhoneNum: '08098765432',
+      Email: 'john.smith@school.com',
+      Address: '123 Teacher Street'
     }
   });
-  const student = await prisma.student.upsert({
-    where: { AdmissionNumber: 'ALF001' },
+
+  // Create student person first
+  const studentPerson = await prisma.person.upsert({
+    where: { PersonID: 'std001' },
     update: {},
     create: {
-      AdmissionNumber: 'ALF001',
+      PersonID: 'std001',
       FirstName: 'Alice',
-      LastName: 'Johnson',
-      DateOfBirth: new Date('2008-05-15'),
-      Gender: 'Female',
-      ParentContact: '+234-802-345-6789',
-      Address: '123 School Street, Lagos',
-      StudentClassID: jss1.ClassID,
-      ParentID: 'parent001',
-      userId: studentUser.id
+      LastName: 'Johnson'
     }
   });
 
-  // Create some subjects
-  const mathSubject = await prisma.subject.upsert({
-    where: { SubjectID: 'math001' },
+  // Create student
+  const studentUser = await prisma.student.upsert({
+    where: { AdmissionNumber: 'std001' },
     update: {},
     create: {
-      SubjectID: 'math001',
+      AdmissionNumber: 'std001',
+      DateOfBirth: new Date('2010-05-15'),
+      Gender: 'F',
+      StudentClassID: 'jss1',
+      ParentContact: '08012345678',
+      Address: '456 Student Avenue',
+      ParentID: 'par001'
+    }
+  });
+
+  // Create subjects
+  const mathSubject = await prisma.subject.upsert({
+    where: { SubjectID: 'sub001' },
+    update: {},
+    create: {
+      SubjectID: 'sub001',
       SubjectName: 'Mathematics',
-      ClassLevel: 'JSS1',
-      TeacherID: teacher.TeacherID
+      TeacherID: 'tch001',
+      ClassLevel: 'JSS1'
     }
   });
 
   const englishSubject = await prisma.subject.upsert({
-    where: { SubjectID: 'eng001' },
+    where: { SubjectID: 'sub002' },
     update: {},
     create: {
-      SubjectID: 'eng001',
+      SubjectID: 'sub002',
       SubjectName: 'English Language',
-      ClassLevel: 'JSS1',
-      TeacherID: teacher.TeacherID
+      TeacherID: 'tch001',
+      ClassLevel: 'JSS1'
     }
   });
 
-  // Create some sample grades
-  await prisma.grade.upsert({
-    where: { GradeID: 'grade001' },
+  // Create registration
+  await prisma.registration.upsert({
+    where: { RegistrationID: 'reg001' },
     update: {},
     create: {
-      GradeID: 'grade001',
-      Term: '1st Term',
-      CA: 35,
-      Exam: 55,
-      TotalScore: 90,
-      Grade: 'A',
-      StudentID: student.AdmissionNumber,
-      SubjectID: mathSubject.SubjectID
+      RegistrationID: 'reg001',
+      StudentID: 'std001',
+      SubjectID: 'sub001',
+      Term: 'First Term'
     }
   });
 
-  // Create some attendance records
+  // Create grade
+  await prisma.grade.upsert({
+    where: { GradeID: 'grd001' },
+    update: {},
+    create: {
+      GradeID: 'grd001',
+      StudentID: 'std001',
+      SubjectID: 'sub001',
+      Term: 'First Term',
+      CA: 20,
+      Exam: 75,
+      TotalScore: 95,
+      Grade: 'A'
+    }
+  });
+
+  // Create attendance
   await prisma.attendance.upsert({
     where: { AttendanceID: 'att001' },
     update: {},
     create: {
       AttendanceID: 'att001',
-      Date: new Date(),
-      Status: 'Present',
-      StudentID: student.AdmissionNumber,
-      SubjectID: mathSubject.SubjectID
+      StudentID: 'std001',
+      SubjectID: 'sub001',
+      Date: new Date('2024-01-15'),
+      Status: 'PRESENT'
     }
   });
 
-  // Create a payment record
+  // Create payment
   await prisma.payment.upsert({
-    where: { TransactionID: 'pay001' },
+    where: { TransactionID: 1 },
     update: {},
     create: {
-      TransactionID: 'pay001',
-      Amount: 120000,
-      PaymentDate: new Date(),
+      TransactionID: 1,
+      StudentID: 'std001',
+      Amount: 50000.00,
+      PaymentDate: new Date('2024-01-10'),
       PaymentMethod: 'Transfer',
       Confirmation: true,
       ReceiptGenerated: true,
-      Term: '1st Term',
-      StudentID: student.AdmissionNumber
+      Term: 'First Term'
     }
   });
 

@@ -21,13 +21,12 @@ export async function PUT(request: NextRequest) {
 
     // Update subject
     const updatedSubject = await prisma.subject.update({
-      where: { SubjectID: subjectId },
-      data: {
+      where: { SubjectID: subjectId },      data: {
         SubjectName,
         ClassLevel
       },
       include: {
-        Teacher: true
+        teacher: true
       }
     });
 

@@ -15,22 +15,23 @@ import {
   Cell
 } from "recharts";
 import { Users, GraduationCap, BookOpen, CreditCard, TrendingUp } from "lucide-react";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface Payment {
-  TransactionID: string;
-  Amount: number;
+  TransactionID: number;
+  Amount: Decimal;
   PaymentDate: Date;
   Term: string;
-  Student: {
-    FirstName: string;
-    LastName: string;
+  student: {
+    AdmissionNumber: string;
+    // Add other student fields that might be needed
   };
 }
 
 interface ClassWithCount {
   ClassName: string;
   _count: {
-    Student: number;
+    student: number;
   };
 }
 
@@ -55,7 +56,7 @@ export default function DashboardPageClient({
 }: DashboardPageProps) {  // Prepare chart data
   const classData = studentsPerClass.map(cls => ({
     name: cls.ClassName,
-    students: cls._count.Student,
+    students: cls._count.student,
   }));
 
   const statsData = [
@@ -286,20 +287,20 @@ export default function DashboardPageClient({
                   transition={{ delay: 0.7 + index * 0.1 }}
                   className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100 hover-lift group"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#ff4e00] to-[#8ea604] rounded-full flex items-center justify-center">                      <span className="text-white font-semibold text-sm">
-                        {payment.Student?.FirstName?.[0]}{payment.Student?.LastName?.[0]}
+                  <div className="flex items-center space-x-4">                    <div className="w-10 h-10 bg-gradient-to-r from-[#ff4e00] to-[#8ea604] rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {payment.student?.AdmissionNumber?.slice(0, 2) || "ST"}
                       </span>
                     </div>
                     <div>
                       <p className="font-medium text-gray-800">
-                        {payment.Student?.FirstName} {payment.Student?.LastName}
+                        Student {payment.student?.AdmissionNumber}
                       </p>
                       <p className="text-sm text-gray-600">{payment.Term}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-lg text-[#8ea604]">${payment.Amount.toFixed(2)}</p>
+                    <p className="font-semibold text-lg text-[#8ea604]">${Number(payment.Amount).toFixed(2)}</p>
                     <p className="text-sm text-gray-600">
                       {payment.PaymentDate ? new Date(payment.PaymentDate).toLocaleDateString() : 'N/A'}
                     </p>

@@ -19,7 +19,7 @@ export type Subject = {
   SubjectID: string;
   SubjectName: string;
   ClassLevel: string;
-  TeacherID: string;
+  TeacherID: string | null;
 };
 
 export const columns: ColumnDef<Subject>[] = [
@@ -117,69 +117,75 @@ export const columns: ColumnDef<Subject>[] = [
           )}
         </Button>
       )
-    },
-    cell: ({ row }) => {
-      const teacherID = row.getValue("TeacherID") as string;
+    },    cell: ({ row }) => {
+      const teacherID = row.getValue("TeacherID") as string | null;
       return (
         <div className="flex items-center space-x-2 py-2">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-md">
             <User className="h-4 w-4 text-white" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">Teacher {teacherID}</div>
-            <div className="text-xs text-gray-500">ID: {teacherID}</div>
+            <div className="font-medium text-gray-900">
+              {teacherID ? `Teacher ${teacherID}` : 'No Teacher Assigned'}
+            </div>
+            <div className="text-xs text-gray-500">
+              {teacherID ? `ID: ${teacherID}` : 'Unassigned'}
+            </div>
           </div>
         </div>
       )
     },
-  },
-  {
+  },  {
     id: "actions",
     header: () => <div className="text-center font-semibold text-gray-700">Actions</div>,
     cell: ({ row }) => {
       const subject = row.original;
 
-      return (
-        <div className="flex justify-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="h-10 w-10 p-0 rounded-full hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-5 w-5 text-gray-600" />
-              </Button>            </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-xl rounded-xl p-1">
-            <DropdownMenuLabel className="px-3 py-2 text-sm font-semibold text-gray-900 border-b border-gray-100">
-              Actions
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(subject.SubjectID.toString())}
-              className="px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 rounded-lg mx-1 my-1 transition-all duration-200 cursor-pointer"
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Copy subject ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="my-1 border-gray-100" />
-            <DropdownMenuItem asChild className="px-0 mx-1">
-              <div className="px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 rounded-lg transition-all duration-200 cursor-pointer">
-                <EditSubjectDialog subject={subject} />
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                await deleteSubject(subject.SubjectID);
-              }}
-              className="px-3 py-2 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-700 rounded-lg mx-1 my-1 transition-all duration-200 cursor-pointer"
-            >
-              <User className="mr-2 h-4 w-4" />
-              Delete subject
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        </div>
-      );
+      return <SubjectActionsCell subject={subject} />;
     },
   },
 ];
+
+function SubjectActionsCell({ subject }: { subject: Subject }) {
+  return (
+    <div className="flex justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="h-10 w-10 p-0 rounded-full hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-300 shadow-sm hover:shadow-md"
+          >
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-5 w-5 text-gray-600" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-xl rounded-xl p-1">
+          <DropdownMenuLabel className="px-3 py-2 text-sm font-semibold text-gray-900 border-b border-gray-100">
+            Actions
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => navigator.clipboard.writeText(subject.SubjectID.toString())}
+            className="px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 rounded-lg mx-1 my-1 transition-all duration-200 cursor-pointer"
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            Copy subject ID
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="my-1 border-gray-100" />
+          <DropdownMenuItem
+            onClick={async () => {
+              await deleteSubject(subject.SubjectID);
+            }}
+            className="px-3 py-2 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-700 rounded-lg mx-1 my-1 transition-all duration-200 cursor-pointer"
+          >
+            <User className="mr-2 h-4 w-4" />
+            Delete subject
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      
+      <div className="ml-2">
+        <EditSubjectDialog subject={subject} />
+      </div>
+    </div>
+  );
+}

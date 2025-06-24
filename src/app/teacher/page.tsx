@@ -87,11 +87,10 @@ export default function TeacherDashboard() {
       header: "Student Name",
       cell: ({ row }: any) => `${row.original.FirstName} ${row.original.LastName}`
     },
-    { accessorKey: "Gender", header: "Gender" },
-    { 
-      accessorKey: "Class", 
+    { accessorKey: "Gender", header: "Gender" },    { 
+      accessorKey: "Renamedclass.ClassName", 
       header: "Class",
-      cell: ({ row }: any) => row.original.Class?.ClassName || 'N/A'
+      cell: ({ row }: any) => row.original.Renamedclass?.ClassName || 'N/A'
     },
     { accessorKey: "ParentContact", header: "Parent Contact" }
   ];

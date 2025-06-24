@@ -107,7 +107,7 @@ export default function ParentDashboard() {
                   {selectedChildData && (
                     <>
                       <span>•</span>
-                      <span>Currently viewing: {selectedChildData.FirstName} {selectedChildData.LastName}</span>
+                      <span>Currently viewing: {selectedChildData.FirstName || ''} {selectedChildData.LastName || ''}</span>
                     </>
                   )}
                 </div>
@@ -146,7 +146,7 @@ export default function ParentDashboard() {
                     >
                       {(data.children || []).map((child: any) => (
                         <option key={child.AdmissionNumber} value={child.AdmissionNumber}>
-                          {child.FirstName} {child.LastName} - {child.Class?.ClassName || 'No Class'} ({child.AdmissionNumber})
+                          {child.FirstName || ''} {child.LastName || ''} - {child.Renamedclass?.ClassName || 'No Class'} ({child.AdmissionNumber})
                         </option>
                       ))}
                     </select>
@@ -155,10 +155,10 @@ export default function ParentDashboard() {
                     <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 w-full">
                       <p className="text-sm text-purple-600 font-medium">Currently Monitoring:</p>
                       <p className="text-lg font-bold text-purple-800">
-                        {selectedChildData ? `${selectedChildData.FirstName} ${selectedChildData.LastName}` : 'Select a child'}
+                        {selectedChildData ? `${selectedChildData.FirstName || ''} ${selectedChildData.LastName || ''}` : 'Select a child'}
                       </p>
                       <p className="text-sm text-purple-600">
-                        {selectedChildData ? `${selectedChildData.Class?.ClassName || 'No Class'} • ${selectedChildData.AdmissionNumber}` : ''}
+                        {selectedChildData ? `${selectedChildData.Renamedclass?.ClassName || 'No Class'} • ${selectedChildData.AdmissionNumber}` : ''}
                       </p>
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export default function ParentDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
-                    <p className="font-semibold">{selectedChildData.FirstName} {selectedChildData.LastName}</p>
+                    <p className="font-semibold">{selectedChildData.FirstName || ''} {selectedChildData.LastName || ''}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Admission Number</p>
@@ -187,7 +187,7 @@ export default function ParentDashboard() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Class</p>
-                    <p className="font-semibold">{selectedChildData.Class?.ClassName}</p>
+                    <p className="font-semibold">{selectedChildData.Renamedclass?.ClassName}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Gender</p>

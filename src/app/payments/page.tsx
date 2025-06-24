@@ -4,10 +4,11 @@ import { columns } from "./columns";
 import { AddPaymentDialog } from "./add-payment-dialog";
 import { CreditCard, DollarSign, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Decimal } from "@prisma/client/runtime/library";
 
 type Payment = {
-  TransactionID: string;
-  Amount: number;
+  TransactionID: number;
+  Amount: Decimal;
   PaymentDate: Date;
   PaymentMethod: string;
   Confirmation: boolean;
@@ -41,15 +42,18 @@ export default async function PaymentsPage() {
         const person = await prisma.$queryRaw`
           SELECT FirstName, LastName FROM person WHERE PersonID = ${payment.StudentID}
         ` as any[];
-        
-        return {
+          return {
           ...payment,
+          TransactionID: payment.TransactionID.toString(),
+          Amount: Number(payment.Amount),
           PaymentDate: payment.PaymentDate.toISOString().split('T')[0],
-          StudentName: person[0] ? `${person[0].FirstName} ${person[0].LastName}` : payment.StudentID
+          StudentName: person[0] ? `${person[0].FirstName || ''} ${person[0].LastName || ''}` : payment.StudentID
         };
       } catch (error) {
         return {
           ...payment,
+          TransactionID: payment.TransactionID.toString(),
+          Amount: Number(payment.Amount),
           PaymentDate: payment.PaymentDate.toISOString().split('T')[0],
           StudentName: payment.StudentID
         };

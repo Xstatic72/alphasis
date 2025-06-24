@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
@@ -15,42 +15,36 @@ export async function GET() {
     
     if (session.role !== 'TEACHER') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    // Get user with teacher profile
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+    }    // Get person with teacher profile
+    const person = await prisma.person.findUnique({
+      where: { PersonID: session.userId },
       include: {
-        teacherProfile: true
+        teacher: true
       }
     });
 
-    if (!user || !user.teacherProfile) {
+    if (!person || !person.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
     // Get teacher's subjects
     const subjects = await prisma.subject.findMany({
-      where: { TeacherID: user.teacherProfile.TeacherID }
+      where: { TeacherID: person.teacher.TeacherID }
     });
 
-    const subjectIds = subjects.map(s => s.SubjectID);
-
-    // Get students from teacher's subjects
+    const subjectIds = subjects.map(s => s.SubjectID);    // Get students from teacher's subjects
     const registrations = await prisma.registration.findMany({
       where: { SubjectID: { in: subjectIds } },
       include: {
-        Student: {
-          include: { Class: true }
+        student: {
+          include: { Renamedclass: true }
         }
       }
-    });
-
-    // Get unique students
+    });    // Get unique students
     const studentsMap = new Map();
     registrations.forEach(reg => {
-      if (!studentsMap.has(reg.Student.AdmissionNumber)) {
-        studentsMap.set(reg.Student.AdmissionNumber, reg.Student);
+      if (reg.student && reg.student.AdmissionNumber && !studentsMap.has(reg.student.AdmissionNumber)) {
+        studentsMap.set(reg.student.AdmissionNumber, reg.student);
       }
     });
     const students = Array.from(studentsMap.values());
@@ -59,8 +53,8 @@ export async function GET() {
     const attendance = await prisma.attendance.findMany({
       where: { SubjectID: { in: subjectIds } },
       include: {
-        Student: true,
-        Subject: true
+        student: true,
+        subject: true
       },
       orderBy: { Date: 'desc' },
       take: 200

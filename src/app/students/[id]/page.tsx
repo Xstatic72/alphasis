@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, Calendar, MapPin, Phone, GraduationCap, CreditCard } from "lucide-react";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface PaymentType {
-  TransactionID: string;
-  Amount: number;
+  TransactionID: number;
+  Amount: Decimal;
   PaymentDate: Date;
   Term: string;
+  PaymentMethod: string;
 }
 
 interface StudentDetailPageProps {
@@ -18,13 +20,11 @@ interface StudentDetailPageProps {
 }
 
 export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
-  const { id } = await params;
-
-  const student = await prisma.student.findUnique({
+  const { id } = await params;  const student = await prisma.student.findUnique({
     where: { AdmissionNumber: id },
     include: {
       Renamedclass: true,
-      Payment: {
+      payment: {
         orderBy: { PaymentDate: 'desc' },
         take: 5,
       },
@@ -57,14 +57,13 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
           ...parentData,
           FirstName: parentPerson[0]?.FirstName || '',
           LastName: parentPerson[0]?.LastName || '',
-          FullName: parentPerson[0] ? `${parentPerson[0].FirstName} ${parentPerson[0].LastName}` : 'N/A'
+          FullName: parentPerson[0] ? `${parentPerson[0].FirstName || ''} ${parentPerson[0].LastName || ''}` : 'N/A'
         };
       }
     } catch (error) {
       console.error('Error fetching parent info:', error);
     }
   }
-
   const studentData = {
     ...student,
     FirstName: person[0]?.FirstName || '',
@@ -101,15 +100,14 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                     <User className="h-10 w-10 text-white" />
                   </div>
                   <div className="flex-1">                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                      {studentData.FirstName} {studentData.LastName}
+                      {studentData.FirstName || ''} {studentData.LastName || ''}
                     </h1>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <GraduationCap className="h-4 w-4" />
                       <span className="font-medium">ID: {studentData.AdmissionNumber}</span>
-                    </div>
-                    {studentData.Class && (
+                    </div>                    {studentData.Renamedclass && (
                       <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-apple-green/10 to-amber/10 text-gray-700 border border-apple-green/20">
-                        Class: {studentData.Class.ClassName}
+                        Class: {studentData.Renamedclass.ClassName}
                       </div>
                     )}
                   </div>
@@ -177,34 +175,13 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                       </div>
                       <p className="text-gray-900 font-medium">{studentData.ParentInfo.FullName}</p>
                     </div>
-                    
-                    <div className="space-y-2">
+                      <div className="space-y-2">
                       <div className="flex items-center space-x-2 text-gray-600 mb-1">
                         <Phone className="h-4 w-4" />
                         <span className="text-sm font-medium">Contact Number</span>
                       </div>
                       <p className="text-gray-900 font-medium">{student.ParentContact}</p>
                     </div>
-                    
-                    {studentData.ParentInfo.Occupation && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-gray-600 mb-1">
-                          <GraduationCap className="h-4 w-4" />
-                          <span className="text-sm font-medium">Occupation</span>
-                        </div>
-                        <p className="text-gray-900 font-medium">{studentData.ParentInfo.Occupation}</p>
-                      </div>
-                    )}
-                    
-                    {studentData.ParentInfo.Address && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-gray-600 mb-1">
-                          <MapPin className="h-4 w-4" />
-                          <span className="text-sm font-medium">Address</span>
-                        </div>
-                        <p className="text-gray-900 font-medium">{studentData.ParentInfo.Address}</p>
-                      </div>
-                    )}
                     
                     <div className="space-y-2 md:col-span-2">
                       <div className="flex items-center space-x-2 text-gray-600 mb-1">
@@ -232,16 +209,16 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                     Recent Payments
                   </h2>
                 </div>
-                
-                {student.Payment.length > 0 ? (
-                  <div className="space-y-4">                    {student.Payment.map((payment: PaymentType) => (
+                  {student.payment.length > 0 ? (
+                  <div className="space-y-4">
+                    {student.payment.map((payment: PaymentType) => (
                       <div
                         key={payment.TransactionID}
                         className="p-4 rounded-xl border border-gray-200 bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-all duration-200"
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div>                            <p className="text-xl font-bold text-gray-900">
-                              ${payment.Amount.toFixed(2)}
+                              ${Number(payment.Amount).toFixed(2)}
                             </p>
                             <p className="text-sm text-gray-600">
                               {payment.Term}

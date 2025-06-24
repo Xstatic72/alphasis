@@ -23,9 +23,17 @@ import {
 } from '@/components/ui/dialog'
 import { updateTeacher } from './actions'
 import { toast } from 'sonner'
-import { Teacher } from '@prisma/client'
+import { teacher } from '@prisma/client'
 import { motion } from 'framer-motion'
 import { Edit3, Save } from 'lucide-react'
+
+// Define a type that includes the person relation
+type TeacherWithPerson = teacher & {
+  person: {
+    FirstName: string;
+    LastName: string;
+  };
+}
 
 const teacherSchema = z.object({
   FirstName: z.string().min(2, { message: 'First name must be at least 2 characters.' }),
@@ -34,13 +42,13 @@ const teacherSchema = z.object({
   PhoneNum: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
 })
 
-export function EditTeacherDialog({ teacher }: { teacher: Teacher }) {  const form = useForm<z.infer<typeof teacherSchema>>({
+export function EditTeacherDialog({ teacher }: { teacher: TeacherWithPerson }) {  const form = useForm<z.infer<typeof teacherSchema>>({
     resolver: zodResolver(teacherSchema),
     defaultValues: {
-      FirstName: teacher.FirstName,
-      LastName: teacher.LastName,
-      Email: teacher.Email,
-      PhoneNum: teacher.PhoneNum,
+      FirstName: teacher.person.FirstName,
+      LastName: teacher.person.LastName,
+      Email: teacher.Email || "",
+      PhoneNum: teacher.PhoneNum || "",
     },
   })
   async function onSubmit(values: z.infer<typeof teacherSchema>) {
@@ -85,7 +93,7 @@ export function EditTeacherDialog({ teacher }: { teacher: Teacher }) {  const fo
                 <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Edit Teacher
                 </DialogTitle>                <DialogDescription className="text-gray-600 mt-1">
-                  Update the details of {teacher.FirstName} {teacher.LastName} below.
+                  Update the details of {teacher.person?.FirstName || ''} {teacher.person?.LastName || ''} below.
                 </DialogDescription>
               </div>
             </motion.div>

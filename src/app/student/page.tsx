@@ -30,10 +30,10 @@ type Subject = {
   SubjectID: string;
   SubjectName: string;
   ClassLevel: string;
-  Teacher: {
+  teacher: {
     FirstName: string;
     LastName: string;
-  };
+  } | null;
 };
 
 type StudentData = {
@@ -119,7 +119,7 @@ export default function StudentDashboard() {
     : 'N/A';  const attendanceRate = (data.attendance || []).length > 0 
     ? Math.round(((data.attendance || []).filter((a: any) => a.Status === 'Present' || a.Status === 'PRESENT' || a.Status === '1').length / (data.attendance || []).length) * 100)
     : 0;
-  const totalPayments = (data.payments || []).reduce((sum: number, payment: any) => sum + payment.Amount, 0);
+  const totalPayments = (data.payments || []).reduce((sum: number, payment: any) => sum + Number(payment.Amount), 0);
   const recentAttendance = (data.attendance || []).slice(0, 10);
   const recentGrades = (data.grades || []).slice(0, 5);
 
@@ -185,7 +185,7 @@ export default function StudentDashboard() {
     { 
       accessorKey: "Amount", 
       header: "Amount",
-      cell: ({ row }: any) => `₦${row.original.Amount.toLocaleString()}`
+      cell: ({ row }: any) => `₦${Number(row.original.Amount).toLocaleString()}`
     },
     { 
       accessorKey: "PaymentDate", 
@@ -220,7 +220,7 @@ export default function StudentDashboard() {
                   <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                     <span>Admission: {data.user.studentProfile.AdmissionNumber}</span>
                     <span>•</span>
-                    <span>Class: {data.user.studentProfile.Class?.ClassName || 'Not Assigned'}</span>
+                    <span>Class: {data.user.studentProfile.Renamedclass?.ClassName || 'Not Assigned'}</span>
                     <span>•</span>
                     <span>Gender: {data.user.studentProfile.Gender}</span>
                   </div>
@@ -451,10 +451,9 @@ export default function StudentDashboard() {
                           </Badge>
                         )}
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600 flex items-center">
+                      <div className="space-y-2">                        <p className="text-sm text-gray-600 flex items-center">
                           <User className="h-4 w-4 mr-1" />
-                          Teacher: {subject.Teacher.FirstName} {subject.Teacher.LastName}
+                          Teacher: {subject.teacher ? `${subject.teacher.FirstName} ${subject.teacher.LastName}` : 'Not assigned'}
                         </p>
                         <p className="text-sm text-gray-500 flex items-center">
                           <GraduationCap className="h-4 w-4 mr-1" />
@@ -519,10 +518,9 @@ export default function StudentDashboard() {
                         <Badge variant="outline">{registration.Term}</Badge>
                       </div>
                       
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600 flex items-center">
+                      <div className="space-y-2">                        <p className="text-sm text-gray-600 flex items-center">
                           <User className="h-4 w-4 mr-1" />
-                          {registration.subject.teacher.FirstName} {registration.subject.teacher.LastName}
+                          {registration.subject.teacher ? `${registration.subject.teacher.FirstName || ''} ${registration.subject.teacher.LastName || ''}` : 'Not assigned'}
                         </p>
                         
                         <div className="grid grid-cols-2 gap-4 text-sm">

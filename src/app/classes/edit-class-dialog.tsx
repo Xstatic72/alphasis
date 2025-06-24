@@ -81,7 +81,7 @@ export function EditClassDialog({ class: currentClass }: { class: Class }) {
                 <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Edit Class
                 </DialogTitle>                <DialogDescription className="text-gray-600 mt-1">
-                  Update the details of {currentClass.ClassName} below.
+                  Update the details of {currentClass.ClassName || 'this class'} below.
                 </DialogDescription>
               </div>
             </motion.div>

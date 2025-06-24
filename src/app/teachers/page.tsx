@@ -4,52 +4,31 @@ import { columns } from "./columns";
 import { AddTeacherDialog } from "./add-teacher-dialog";
 import { UserCheck, Users, BookOpen, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { teacher } from '@prisma/client';
 
-type Teacher = {
-  TeacherID: string;
-  FirstName?: string;
-  LastName?: string;
-  PhoneNum: string;
-  Email: string;
+// Define a type that includes the person relation
+type TeacherWithPerson = teacher & {
+  person: {
+    FirstName: string;
+    LastName: string;
+  };
 }
 
 export default async function TeachersPage() {
-  // Get all teachers
-  const teachersData = await prisma.teacher.findMany({
+  // Get all teachers with person relation
+  const teachers: TeacherWithPerson[] = await prisma.teacher.findMany({
+    include: {
+      person: true
+    },
     orderBy: { TeacherID: 'asc' }
-  });
-
-  // Get teacher names from person table
-  const teachersWithNames = await Promise.all(
-    teachersData.map(async (teacher) => {
-      try {
-        const person = await prisma.$queryRaw`
-          SELECT FirstName, LastName FROM person WHERE PersonID = ${teacher.TeacherID}
-        ` as any[];
-        
-        return {
-          ...teacher,
-          FirstName: person[0]?.FirstName || '',
-          LastName: person[0]?.LastName || ''
-        };
-      } catch (error) {
-        return {
-          ...teacher,
-          FirstName: '',
-          LastName: ''
-        };
-      }
-    })
-  );
-
-  // Get subjects count per teacher
+  });// Get subjects count per teacher
   const subjects = await prisma.subject.findMany();
   const subjectsPerTeacher = subjects.reduce((acc: Record<string, number>, subject) => {
-    acc[subject.TeacherID] = (acc[subject.TeacherID] || 0) + 1;
+    if (subject.TeacherID) {
+      acc[subject.TeacherID] = (acc[subject.TeacherID] || 0) + 1;
+    }
     return acc;
   }, {});
-
-  const teachers: Teacher[] = teachersWithNames;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-6">
@@ -106,8 +85,7 @@ export default async function TeachersPage() {
         <Card>
           <CardHeader>
             <CardTitle>Teachers List</CardTitle>
-          </CardHeader>
-          <CardContent>
+          </CardHeader>          <CardContent>
             <DataTable 
               columns={columns} 
               data={teachers} 
@@ -116,54 +94,6 @@ export default async function TeachersPage() {
             />
           </CardContent>
         </Card>
-      </div>
-    </div>
-  );
-              searchPlaceholder="Search teachers by name..."
-              searchColumn="FirstName"
-            />
-          </div>
-        </div>
-
-        {/* Additional Info Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-aerospace-orange to-gamboge rounded-lg">
-                <UserCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Teachers</p>
-                <p className="text-2xl font-bold text-gradient-primary">{teachers.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-apple-green to-amber rounded-lg">
-                <UserCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Active Teachers</p>
-                <p className="text-2xl font-bold text-gradient-secondary">{teachers.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-modern hover-lift p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-gamboge to-aerospace-orange rounded-lg">
-                <UserCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>                <p className="text-sm text-gray-600">Email Contacts</p>
-                <p className="text-2xl font-bold gradient-text">
-                  {teachers.filter((teacher) => teacher.Email).length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

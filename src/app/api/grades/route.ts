@@ -60,28 +60,25 @@ export async function GET(request: NextRequest) {
         try {
           const studentPerson = await prisma.$queryRaw`
             SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
-
-          return {
+          ` as any[];          return {
             ...grade,
-            Student: {
+            student: {
               AdmissionNumber: grade.StudentID,
               FirstName: studentPerson[0]?.FirstName || '',
               LastName: studentPerson[0]?.LastName || '',
             },
-            Subject: {
+            subject: {
               SubjectName: grade.subject.SubjectName
             }
-          };
-        } catch (error) {
+          };        } catch (error) {
           return {
             ...grade,
-            Student: {
+            student: {
               AdmissionNumber: grade.StudentID,
               FirstName: '',
               LastName: '',
             },
-            Subject: {
+            subject: {
               SubjectName: grade.subject?.SubjectName || ''
             }
           };
@@ -133,7 +130,7 @@ export async function GET(request: NextRequest) {
       });      // Transform grades to include proper subject names
       const transformedGrades = grades.map(grade => ({
         ...grade,
-        Subject: {
+        subject: {
           SubjectName: grade.subject?.SubjectName || ''
         }
       }));
@@ -174,28 +171,25 @@ export async function GET(request: NextRequest) {
 
           const subjectInfo = await prisma.$queryRaw`
             SELECT SubjectName FROM subject WHERE SubjectID = ${grade.SubjectID}
-          ` as any[];
-
-          return {
+          ` as any[];          return {
             ...grade,
-            Student: {
+            student: {
               AdmissionNumber: grade.StudentID,
               FirstName: studentPerson[0]?.FirstName || '',
               LastName: studentPerson[0]?.LastName || '',
             },
-            Subject: {
+            subject: {
               SubjectName: subjectInfo[0]?.SubjectName || ''
             }
-          };
-        } catch (error) {
+          };        } catch (error) {
           return {
             ...grade,
-            Student: {
+            student: {
               AdmissionNumber: grade.StudentID,
               FirstName: '',
               LastName: '',
             },
-            Subject: {
+            subject: {
               SubjectName: ''
             }
           };

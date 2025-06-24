@@ -15,31 +15,34 @@ export async function POST(request: NextRequest) {
     
     if (session.role !== 'TEACHER') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    // Get teacher profile
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+    }    // Get teacher profile
+    const person = await prisma.person.findUnique({
+      where: { PersonID: session.userId },
       include: {
-        teacherProfile: true
+        teacher: true
       }
     });
 
-    if (!user || !user.teacherProfile) {
+    if (!person || !person.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
     const { SubjectName, ClassLevel } = await request.json();
 
+    // Generate SubjectID
+    const subjectCount = await prisma.subject.count();
+    const SubjectID = `sub${String(subjectCount + 1).padStart(3, '0')}`;
+
     // Create new subject
     const newSubject = await prisma.subject.create({
       data: {
+        SubjectID,
         SubjectName,
         ClassLevel,
-        TeacherID: user.teacherProfile.TeacherID
+        TeacherID: person.teacher.TeacherID
       },
       include: {
-        Teacher: true
+        teacher: true
       }
     });
 

@@ -14,14 +14,14 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     prisma.student.count(),
     prisma.teacher.count(),
-    prisma.class.count(),
+    prisma.renamedclass.count(),
     prisma.subject.count(),
     prisma.payment.count(),    prisma.payment.findMany({
       take: 5,
       orderBy: { PaymentDate: 'desc' },
-      include: { Student: true },
-    }),    prisma.class.findMany({
-      include: { _count: { select: { Student: true } } },
+      include: { student: true },
+    }),prisma.renamedclass.findMany({
+      include: { _count: { select: { student: true } } },
     }),
   ]);
 

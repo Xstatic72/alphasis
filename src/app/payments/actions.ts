@@ -20,14 +20,20 @@ export async function createPayment(values: z.infer<typeof paymentSchema>) {
       message: "Invalid data provided.",
     }
   }
-
   try {
-    await prisma.payment.create({
-      data: {
+    // Get the next TransactionID
+    const lastPayment = await prisma.payment.findFirst({
+      orderBy: { TransactionID: 'desc' },
+      select: { TransactionID: true }
+    });
+    const nextTransactionID = (lastPayment?.TransactionID || 0) + 1;
+
+    await prisma.payment.create({      data: {
+        TransactionID: nextTransactionID,
         StudentID: validatedFields.data.StudentID,
         Amount: validatedFields.data.Amount,
         Term: validatedFields.data.Term,
-        PaymentMethod: validatedFields.data.PaymentMethod,
+        PaymentMethod: validatedFields.data.PaymentMethod as 'Cash' | 'Transfer',
         PaymentDate: new Date(),
         Confirmation: false,
         ReceiptGenerated: false,
@@ -60,14 +66,13 @@ export async function updatePayment(
     }
   }
 
-  try {
-    await prisma.payment.update({
-      where: { TransactionID: id },
+  try {    await prisma.payment.update({
+      where: { TransactionID: parseInt(id) },
       data: {
         StudentID: validatedFields.data.StudentID,
         Amount: validatedFields.data.Amount,
         Term: validatedFields.data.Term,
-        PaymentMethod: validatedFields.data.PaymentMethod,
+        PaymentMethod: validatedFields.data.PaymentMethod as 'Cash' | 'Transfer',
       },
     })
 
@@ -85,9 +90,8 @@ export async function updatePayment(
 }
 
 export async function deletePayment(id: string) {
-  try {
-    await prisma.payment.delete({
-      where: { TransactionID: id },
+  try {    await prisma.payment.delete({
+      where: { TransactionID: parseInt(id) },
     })
 
     revalidatePath("/payments")

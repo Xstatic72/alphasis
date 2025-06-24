@@ -53,9 +53,8 @@ export default function Navbar() {
     setSession(null);
     router.push('/login');
   };
-
-  // Don't show navbar on login page or if no session
-  if (pathname === '/login' || !session || loading) {
+  // Only show navbar on the home page
+  if (pathname !== '/' || !session || loading) {
     return null;
   }
 

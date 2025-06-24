@@ -17,9 +17,10 @@ import { Student } from "./columns";
 
 export function EditStudentDialog({ student }: { student: Student }) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit</Button>
+    <Dialog>      <DialogTrigger asChild>
+        <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200">
+          ✏️ Edit
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
