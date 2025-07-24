@@ -4,6 +4,7 @@ import "./globals.css";
 import PageTransition from "@/components/layout/PageTransition";
 import Navbar from "@/components/layout/Navbar";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
         </PageTransition>
         <Toaster />
+        <Analytics/>
       </body>
     </html>
   );
