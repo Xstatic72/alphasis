@@ -51,8 +51,28 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [globalFilter, setGlobalFilter] = React.useState("");  const table = useReactTable({
+  const [rowSelection, setRowSelection] = React.useState({});  const [globalFilter, setGlobalFilter] = React.useState("");
+
+  // Custom global filter function for better search across multiple fields
+  const customGlobalFilterFn = (row: any, columnId: string, value: string) => {
+    const searchValue = value.toLowerCase();
+    
+    // Search in all string values of the row
+    const searchableValues = [
+      row.original.AdmissionNumber,
+      row.original.FirstName, 
+      row.original.LastName,
+      `${row.original.FirstName} ${row.original.LastName}`, // Full name
+      row.original.Gender,
+      row.original.ParentContact,
+      row.original.Address,
+      row.original.StudentClassID
+    ].filter(Boolean).map(val => String(val).toLowerCase());
+    
+    return searchableValues.some(val => val.includes(searchValue));
+  };
+
+  const table = useReactTable({
     data: data || [], // Ensure data is never undefined
     columns,
     onSortingChange: setSorting,
@@ -64,7 +84,7 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
+    globalFilterFn: customGlobalFilterFn,
     state: {
       sorting,
       columnFilters,
@@ -72,7 +92,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       globalFilter,
     },
-  });  // Use the first searchable column if no searchColumn is specified
+  });// Use the first searchable column if no searchColumn is specified
   const getFirstAccessorColumn = () => {
     const accessorColumn = columns.find(col => 'accessorKey' in col && col.accessorKey);
     return accessorColumn ? (accessorColumn as any).accessorKey : undefined;

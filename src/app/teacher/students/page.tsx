@@ -77,6 +77,14 @@ export default function TeacherStudentsPage() {  const [data, setData] = useStat
     }
   };
 
+  const scrollToSection = (sectionId: string)=>{
+    const element = document.getElementById(sectionId)
+    if (element){
+      element.scrollIntoView({behavior: "smooth"})
+    }
+
+  }
+
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -197,7 +205,9 @@ export default function TeacherStudentsPage() {  const [data, setData] = useStat
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleEditStudent(row.original)}
+            onClick={() => {handleEditStudent(row.original);
+              scrollToSection('edit student')
+            }}
             className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-all duration-200 active:scale-95"
           >
             <Edit className="h-3 w-3 mr-1" />
@@ -292,114 +302,117 @@ export default function TeacherStudentsPage() {  const [data, setData] = useStat
 
         {/* Add/Edit Student Form */}
         {showAddForm && (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {editingStudent ? 'Edit Student' : 'Add New Student'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={editingStudent ? handleUpdateStudent : handleAddStudent} className="grid grid-cols-1 md:grid-cols-2 gap-4">                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={newStudentForm.FirstName}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, FirstName: e.target.value}))}
-                    className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={newStudentForm.LastName}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, LastName: e.target.value}))}
-                    className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={newStudentForm.DateOfBirth}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, DateOfBirth: e.target.value}))}
-                    className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>                <div>
-                  <Label htmlFor="gender">Gender</Label>
-                  <select
-                    id="gender"
-                    className="w-full p-2 border rounded-md mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={newStudentForm.Gender}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, Gender: e.target.value}))}
-                    required
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="studentClass">Class</Label>
-                  <select
-                    id="studentClass"
-                    className="w-full p-2 border rounded-md mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={newStudentForm.StudentClassID}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, StudentClassID: e.target.value}))}
-                    required
-                  >
-                    <option value="">Select Class</option>
-                    {(data?.classes || []).map((cls: any) => (
-                      <option key={cls.ClassID} value={cls.ClassID}>
-                        {cls.ClassName}
-                      </option>
-                    ))}
-                  </select>
-                </div>                <div>
-                  <Label htmlFor="parentContact">Parent Contact</Label>
-                  <Input
-                    id="parentContact"
-                    value={newStudentForm.ParentContact}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, ParentContact: e.target.value}))}
-                    className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={newStudentForm.Address}
-                    onChange={(e) => setNewStudentForm(prev => ({...prev, Address: e.target.value}))}
-                    className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div><div className="md:col-span-2 flex space-x-2">
-                  <Button 
-                    type="submit"
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
-                  >
-                    {editingStudent ? 'Update Student' : 'Add Student'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setEditingStudent(null);
-                    }}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition-all duration-200 active:scale-95"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          
+          <section id='edit student'>
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editingStudent ? 'Edit Student' : 'Add New Student'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={editingStudent ? handleUpdateStudent : handleAddStudent} className="grid grid-cols-1 md:grid-cols-2 gap-4">                <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={newStudentForm.FirstName}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, FirstName: e.target.value}))}
+                      className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={newStudentForm.LastName}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, LastName: e.target.value}))}
+                      className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={newStudentForm.DateOfBirth}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, DateOfBirth: e.target.value}))}
+                      className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>                <div>
+                    <Label htmlFor="gender">Gender</Label>
+                    <select
+                      id="gender"
+                      className="w-full p-2 border rounded-md mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={newStudentForm.Gender}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, Gender: e.target.value}))}
+                      required
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="studentClass">Class</Label>
+                    <select
+                      id="studentClass"
+                      className="w-full p-2 border rounded-md mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={newStudentForm.StudentClassID}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, StudentClassID: e.target.value}))}
+                      required
+                    >
+                      <option value="">Select Class</option>
+                      {(data?.classes || []).map((cls: any) => (
+                        <option key={cls.ClassID} value={cls.ClassID}>
+                          {cls.ClassName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>                <div>
+                    <Label htmlFor="parentContact">Parent Contact</Label>
+                    <Input
+                      id="parentContact"
+                      value={newStudentForm.ParentContact}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, ParentContact: e.target.value}))}
+                      className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      value={newStudentForm.Address}
+                      onChange={(e) => setNewStudentForm(prev => ({...prev, Address: e.target.value}))}
+                      className="mt-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div><div className="md:col-span-2 flex space-x-2">
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+                    >
+                      {editingStudent ? 'Update Student' : 'Add Student'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setEditingStudent(null);
+                      }}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition-all duration-200 active:scale-95"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </section>
         )}
 
         {/* Search */}

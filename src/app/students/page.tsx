@@ -89,6 +89,7 @@ export default async function StudentsPage() {
               columns={columns} 
               data={students} 
               searchPlaceholder="Search students by name or admission number..."
+              searchColumn="AdmissionNumber"
               globalSearch={true}
             />
           </div>

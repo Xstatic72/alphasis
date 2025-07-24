@@ -185,17 +185,21 @@ export async function deleteStudent(admissionNumber: string) {
       // Delete registration records
       await tx.registration.deleteMany({
         where: { StudentID: admissionNumber },
-      });
-
-      // Now delete the student record
+      });      // Now delete the student record
       await tx.student.delete({
         where: { AdmissionNumber: admissionNumber },
       });
 
-      // Finally delete the corresponding person record
-      await tx.person.delete({
-        where: { PersonID: admissionNumber },
+      // Finally delete the corresponding person record (if it exists)
+      const personExists = await tx.person.findUnique({
+        where: { PersonID: admissionNumber }
       });
+      
+      if (personExists) {
+        await tx.person.delete({
+          where: { PersonID: admissionNumber },
+        });
+      }
     });
 
     revalidatePath("/students");
