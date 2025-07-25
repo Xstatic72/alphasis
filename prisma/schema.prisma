@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model attendance {
-  AttendanceID String            @id @unique(map: "AttendanceID") @db.VarChar(4)
+  AttendanceID String            @id @unique(map: "attendance_AttendanceID") @db.VarChar(4)
   StudentID    String            @db.VarChar(10)
   SubjectID    String            @db.VarChar(10)
   Date         DateTime          @db.Date
@@ -16,13 +16,13 @@ model attendance {
   student      student           @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "attendance_ibfk_1")
   subject      subject           @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "attendance_ibfk_2")
 
-  @@index([StudentID], map: "StudentID")
-  @@index([SubjectID], map: "SubjectID")
+  @@index([StudentID], map: "attendance_StudentID_idx")
+  @@index([SubjectID], map: "attendance_SubjectID_idx")
 }
 
 /// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
 model Renamedclass {
-  ClassID   String    @id @unique(map: "ClassID") @db.VarChar(10)
+  ClassID   String    @id @unique(map: "class_ClassID") @db.VarChar(10)
   ClassName String    @db.VarChar(20)
   student   student[]
 
@@ -30,7 +30,7 @@ model Renamedclass {
 }
 
 model grade {
-  GradeID    String  @id @unique(map: "GradeID") @db.VarChar(4)
+  GradeID    String  @id @unique(map: "grade_GradeID") @db.VarChar(4)
   StudentID  String  @db.VarChar(10)
   SubjectID  String  @db.VarChar(10)
   Term       String  @db.VarChar(10)
@@ -41,19 +41,19 @@ model grade {
   student    student @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "grade_ibfk_1")
   subject    subject @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "grade_ibfk_2")
 
-  @@index([StudentID], map: "StudentID")
-  @@index([SubjectID], map: "SubjectID")
+  @@index([StudentID], map: "grade_StudentID_idx")
+  @@index([SubjectID], map: "grade_SubjectID_idx")
 }
 
 model parent {
-  ParentID      String    @id @unique(map: "ParentID") @db.VarChar(10)
+  ParentID      String    @id @unique(map: "parent_ParentID") @db.VarChar(10)
   ContactNumber String    @db.VarChar(15)
   person        person    @relation(fields: [ParentID], references: [PersonID], onDelete: NoAction, onUpdate: NoAction, map: "parent_ibfk_1")
   student       student[]
 }
 
 model payment {
-  TransactionID    Int                   @id @unique(map: "TransactionID")
+  TransactionID    Int                   @id @unique(map: "payment_TransactionID")
   StudentID        String                @db.VarChar(10)
   Amount           Decimal               @db.Decimal(10, 2)
   PaymentDate      DateTime              @db.Date
@@ -63,7 +63,7 @@ model payment {
   Term             String                @db.VarChar(10)
   student          student               @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "payment_ibfk_1")
 
-  @@index([StudentID], map: "StudentID")
+  @@index([StudentID], map: "payment_StudentID_idx")
 }
 
 model person {
@@ -75,19 +75,19 @@ model person {
 }
 
 model registration {
-  RegistrationID String  @id @unique(map: "RegistrationID") @db.VarChar(4)
+  RegistrationID String  @id @unique(map: "registration_RegistrationID") @db.VarChar(4)
   StudentID      String  @db.VarChar(10)
   SubjectID      String  @db.VarChar(10)
   Term           String  @db.VarChar(10)
   student        student @relation(fields: [StudentID], references: [AdmissionNumber], onDelete: NoAction, onUpdate: NoAction, map: "registration_ibfk_1")
   subject        subject @relation(fields: [SubjectID], references: [SubjectID], onDelete: NoAction, onUpdate: NoAction, map: "registration_ibfk_2")
 
-  @@index([StudentID], map: "StudentID")
-  @@index([SubjectID], map: "SubjectID")
+  @@index([StudentID], map: "registration_StudentID_idx")
+  @@index([SubjectID], map: "registration_SubjectID_idx")
 }
 
 model student {
-  AdmissionNumber String         @id @unique(map: "AdmissionNumber") @db.VarChar(10)
+  AdmissionNumber String         @id @unique(map: "student_AdmissionNumber") @db.VarChar(10)
   DateOfBirth     DateTime       @db.Date
   Gender          student_Gender
   StudentClassID  String         @db.VarChar(10)
@@ -101,12 +101,12 @@ model student {
   parent          parent?        @relation(fields: [ParentID], references: [ParentID], onDelete: NoAction, onUpdate: NoAction, map: "student_ibfk_1")
   Renamedclass    Renamedclass   @relation(fields: [StudentClassID], references: [ClassID], onDelete: NoAction, onUpdate: NoAction, map: "student_ibfk_2")
 
-  @@index([ParentID], map: "ParentID")
-  @@index([StudentClassID], map: "StudentClassID")
+  @@index([ParentID], map: "student_ParentID_idx")
+  @@index([StudentClassID], map: "student_StudentClassID_idx")
 }
 
 model subject {
-  SubjectID    String         @id @unique(map: "SubjectID") @db.VarChar(10)
+  SubjectID    String         @id @unique(map: "subject_SubjectID") @db.VarChar(10)
   SubjectName  String         @db.VarChar(50)
   TeacherID    String?        @db.VarChar(10)
   ClassLevel   String         @db.VarChar(10)
@@ -115,11 +115,11 @@ model subject {
   registration registration[]
   teacher      teacher?       @relation(fields: [TeacherID], references: [TeacherID], onDelete: NoAction, onUpdate: NoAction, map: "subject_ibfk_1")
 
-  @@index([TeacherID], map: "TeacherID")
+  @@index([TeacherID], map: "subject_TeacherID_idx")
 }
 
 model teacher {
-  TeacherID String    @id @unique(map: "TeacherID") @db.VarChar(10)
+  TeacherID String    @id @unique(map: "teacher_TeacherID") @db.VarChar(10)
   PhoneNum  String?   @db.VarChar(15)
   Email     String?   @db.VarChar(50)
   Address   String?   @db.VarChar(100)
