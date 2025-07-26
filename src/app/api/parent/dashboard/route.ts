@@ -29,19 +29,19 @@ export async function GET(request: NextRequest) {
       include: { Renamedclass: true }
     });
 
-    // Get corresponding person data for children
+    // Get corresponding person data for children using proper Prisma relations
     const childrenWithNames = await Promise.all(
       children.map(async (child) => {
         try {
-          const childPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${child.AdmissionNumber}
-          ` as any[];
+          const childPerson = await prisma.person.findUnique({
+            where: { PersonID: child.AdmissionNumber }
+          });
           
           return {
             ...child,
-            FirstName: childPerson[0]?.FirstName || '',
-            LastName: childPerson[0]?.LastName || '',
-            FullName: childPerson[0] ? `${childPerson[0].FirstName} ${childPerson[0].LastName}` : child.AdmissionNumber,
+            FirstName: childPerson?.FirstName || '',
+            LastName: childPerson?.LastName || '',
+            FullName: childPerson ? `${childPerson.FirstName} ${childPerson.LastName}` : child.AdmissionNumber,
             Class: child.Renamedclass
           };
         } catch (error) {

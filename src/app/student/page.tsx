@@ -26,6 +26,9 @@ import {
   Loader2
 } from 'lucide-react';
 
+/**
+ * Type definitions for student dashboard data structures
+ */
 type Subject = {
   SubjectID: string;
   SubjectName: string;
@@ -45,13 +48,31 @@ type StudentData = {
   payments: any[];
 };
 
+/**
+ * Student Dashboard Component
+ * 
+ * Comprehensive dashboard for students providing:
+ * - Personal information and class details
+ * - Academic performance metrics and statistics
+ * - Subject registration management
+ * - Grades and attendance tracking
+ * - Payment history and financial overview
+ * - Real-time data updates and interactive features
+ * 
+ * @returns {JSX.Element} Complete student dashboard interface
+ */
 export default function StudentDashboard() {
+  // State management for dashboard data and UI interactions
   const [data, setData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
+  // State for tracking subject registration process
   const [registering, setRegistering] = useState<string | null>(null);
   const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
   const router = useRouter();
 
+  /**
+   * Handles user logout by clearing session and redirecting to login page
+   */
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -64,12 +85,23 @@ export default function StudentDashboard() {
     }
   };
 
+  /**
+   * Fetch student dashboard data on component mount
+   * Retrieves comprehensive student information including grades, attendance, etc.
+   */
   useEffect(() => {
     fetch('/api/student/dashboard')
       .then(res => res.json())
       .then(setData)
       .finally(() => setLoading(false));
-  }, []);  const handleRegisterSubject = async (subjectId: string) => {
+  }, []);
+
+  /**
+   * Handles subject registration for students
+   * 
+   * @param {string} subjectId - ID of the subject to register for
+   */
+  const handleRegisterSubject = async (subjectId: string) => {
     setRegistering(subjectId);
     setRegistrationSuccess(null);
     
@@ -81,7 +113,7 @@ export default function StudentDashboard() {
       });
 
       if (response.ok) {
-        // Refresh data
+        // Refresh dashboard data after successful registration
         const updatedData = await fetch('/api/student/dashboard').then(res => res.json());
         setData(updatedData);
         setRegistrationSuccess(subjectId);
@@ -98,11 +130,16 @@ export default function StudentDashboard() {
     } finally {
       setRegistering(null);
     }
-  };if (loading) return (
+  };
+
+  // Loading state with spinner
+  if (loading) return (
     <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
     </div>
   );
+  
+  // Error state when data fails to load
   if (!data) return (
     <div className="flex justify-center items-center h-screen">
       <div className="text-center">
@@ -112,18 +149,28 @@ export default function StudentDashboard() {
     </div>
   );
 
-  // Calculate statistics
+  // Calculate performance statistics for dashboard metrics
   const totalSubjects = (data.registeredSubjects || []).length;
   const averageGrade = (data.grades || []).length > 0 
-    ? ((data.grades || []).reduce((sum: number, grade: any) => sum + grade.TotalScore, 0) / (data.grades || []).length).toFixed(1)
-    : 'N/A';  const attendanceRate = (data.attendance || []).length > 0 
-    ? Math.round(((data.attendance || []).filter((a: any) => a.Status === 'Present' || a.Status === 'PRESENT' || a.Status === '1').length / (data.attendance || []).length) * 100)
+    ? ((data.grades || []).reduce((sum: number, grade: any) => sum + (grade.TotalScore || 0), 0) / (data.grades || []).length).toFixed(1)
+    : 'N/A';
+
+  // Calculate attendance rate percentage
+  const attendanceRate = (data.attendance || []).length > 0 
+    ? Math.round(((data.attendance || []).filter((a: any) => a.Status === 'Present' || a.Status === 'PRESENT').length / (data.attendance || []).length) * 100)
     : 0;
-  const totalPayments = (data.payments || []).reduce((sum: number, payment: any) => sum + Number(payment.Amount), 0);
+    
+  // Calculate total payments made
+  const totalPayments = (data.payments || []).reduce((sum: number, payment: any) => sum + Number(payment.Amount || 0), 0);
+  
+  // Get recent records for quick overview
   const recentAttendance = (data.attendance || []).slice(0, 10);
   const recentGrades = (data.grades || []).slice(0, 5);
 
-  // Prepare data for tables
+  /**
+   * Column definitions for grades data table
+   * Includes subject name, term, scores, and grade with conditional styling
+   */
   const gradeColumns = [
     { 
       accessorKey: "subject.SubjectName", 
@@ -149,6 +196,10 @@ export default function StudentDashboard() {
     }
   ];
 
+  /**
+   * Column definitions for attendance data table
+   * Shows subject, date, and status with visual indicators
+   */
   const attendanceColumns = [
     { 
       accessorKey: "subject.SubjectName", 
@@ -159,12 +210,13 @@ export default function StudentDashboard() {
       accessorKey: "Date", 
       header: "Date",
       cell: ({ row }: any) => new Date(row.original.Date).toLocaleDateString()
-    },    { 
+    },
+    { 
       accessorKey: "Status", 
       header: "Status",
       cell: ({ row }: any) => (
-        <Badge variant={row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? 'default' : 'destructive'}>
-          {row.original.Status === 'Present' || row.original.Status === 'PRESENT' || row.original.Status === '1' ? (
+        <Badge variant={row.original.Status === 'Present' || row.original.Status === 'PRESENT' ? 'default' : 'destructive'}>
+          {row.original.Status === 'Present' || row.original.Status === 'PRESENT' ? (
             <>
               <UserCheck className="h-3 w-3 mr-1" />
               Present
@@ -180,6 +232,10 @@ export default function StudentDashboard() {
     }
   ];
 
+  /**
+   * Column definitions for payments data table
+   * Displays transaction details, amounts, and confirmation status
+   */
   const paymentColumns = [
     { accessorKey: "TransactionID", header: "Transaction ID" },
     { 
@@ -206,7 +262,7 @@ export default function StudentDashboard() {
   ];  return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Enhanced Header */}
+        {/* Dashboard Header with User Information */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -238,8 +294,9 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Enhanced Stats Cards */}
+        {/* Performance Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Registered Subjects Card */}
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -255,6 +312,7 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
           
+          {/* Academic Average Card */}
           <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -270,6 +328,7 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
           
+          {/* Attendance Rate Card */}
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -285,6 +344,7 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
 
+          {/* Total Payments Card */}
           <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -301,7 +361,7 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Action Buttons */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -331,8 +391,9 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
 
-        {/* Academic Performance Overview */}
+        {/* Academic Performance Overview - Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Grades Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -371,6 +432,7 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
 
+          {/* Recent Attendance Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -386,8 +448,9 @@ export default function StudentDashboard() {
                       <div>
                         <p className="font-medium">{attendance.subject?.SubjectName || 'Unknown Subject'}</p>
                         <p className="text-sm text-gray-600">{new Date(attendance.Date).toLocaleDateString()}</p>
-                      </div>                      <Badge variant={attendance.Status === 'Present' || attendance.Status === 'PRESENT' || attendance.Status === '1' ? 'default' : 'destructive'}>
-                        {attendance.Status === 'Present' || attendance.Status === 'PRESENT' || attendance.Status === '1' ? (
+                      </div>
+                      <Badge variant={attendance.Status === 'Present' || attendance.Status === 'PRESENT' ? 'default' : 'destructive'}>
+                        {attendance.Status === 'Present' || attendance.Status === 'PRESENT' ? (
                           <>
                             <UserCheck className="h-3 w-3 mr-1" />
                             Present
@@ -410,7 +473,9 @@ export default function StudentDashboard() {
               )}
             </CardContent>
           </Card>
-        </div>        {/* Enhanced Course Registration */}
+        </div>
+
+        {/* Course Registration Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">

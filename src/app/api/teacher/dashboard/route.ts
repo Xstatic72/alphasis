@@ -2,8 +2,21 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
+/**
+ * Teacher Dashboard API Route
+ * 
+ * Provides comprehensive dashboard data for authenticated teachers including:
+ * - Teacher profile and subjects taught
+ * - Student management data with names and class information
+ * - Academic grades for teacher's subjects
+ * - Attendance records for classes
+ * - Registration and enrollment statistics
+ * 
+ * @returns {Object} Complete teacher dashboard data or error response
+ */
 export async function GET() {
   try {
+    // Authenticate and verify teacher session
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session');
     
@@ -13,9 +26,12 @@ export async function GET() {
 
     const session = JSON.parse(sessionCookie.value);
     
+    // Ensure only teachers can access this endpoint
     if (session.role !== 'TEACHER') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }    // Get person and teacher profile
+    }
+
+    // Get teacher's personal and professional profile information
     const person = await prisma.person.findUnique({
       where: { PersonID: session.userId },
       include: {
@@ -25,38 +41,44 @@ export async function GET() {
 
     if (!person || !person.teacher) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
-    }    // Get subjects taught by this teacher
+    }
+
+    // Get all subjects assigned to this teacher
     const subjects = await prisma.subject.findMany({
       where: { TeacherID: person.teacher.TeacherID },
       include: { teacher: true }
-    });    // Get all students (for teacher's overview) 
+    });
+
+    // Get all students for teacher overview and management
     const students = await prisma.student.findMany({
       include: { 
         Renamedclass: true
       },
       orderBy: { AdmissionNumber: 'asc' }
     });
-  
 
-    // Get corresponding person data for students using raw query if needed
+    // Enhance student data with names from person table using proper Prisma relations
     const studentsWithNames = await Promise.all(
-      students.map(async (student) => {        try {
-          const personResult = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as { FirstName: string; LastName: string }[];
+      students.map(async (student) => {
+        try {
+          const person = await prisma.person.findUnique({
+            where: { PersonID: student.AdmissionNumber }
+          });
           
           return {
             ...student,
-            FirstName: personResult[0]?.FirstName || '',
-            LastName: personResult[0]?.LastName || '',
-            FullName: personResult[0] ? `${personResult[0].FirstName} ${personResult[0].LastName}` : student.AdmissionNumber
+            FirstName: person?.FirstName || '',
+            LastName: person?.LastName || '',
+            FullName: person ? `${person.FirstName} ${person.LastName}` : student.AdmissionNumber,
+            ClassName: student.Renamedclass?.ClassName || 'Unknown Class'
           };
         } catch {
           return {
             ...student,
             FirstName: '',
             LastName: '',
-            FullName: student.AdmissionNumber
+            FullName: student.AdmissionNumber,
+            ClassName: student.Renamedclass?.ClassName || 'Unknown Class'
           };
         }
       })
@@ -90,26 +112,27 @@ export async function GET() {
 
       // Get student and subject names for each grade
       grades = await Promise.all(
-        gradesRaw.map(async (grade) => {          try {
-            const [studentResult, subjectResult] = await Promise.all([
-              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}` as Promise<{ FirstName: string; LastName: string }[]>,
+        gradesRaw.map(async (grade) => {
+          try {
+            const [student, subject] = await Promise.all([
+              prisma.person.findUnique({ where: { PersonID: grade.StudentID } }),
               prisma.subject.findUnique({ where: { SubjectID: grade.SubjectID } })
             ]);
             
-            const studentName = studentResult[0] 
-              ? `${studentResult[0].FirstName} ${studentResult[0].LastName}` 
+            const studentName = student 
+              ? `${student.FirstName} ${student.LastName}` 
               : 'Unknown Student';
             
             return {
               ...grade,
               StudentName: studentName,
-              SubjectName: subjectResult?.SubjectName || 'Unknown Subject',
+              SubjectName: subject?.SubjectName || 'Unknown Subject',
               Student: {
-                FirstName: studentResult[0]?.FirstName || '',
-                LastName: studentResult[0]?.LastName || ''
+                FirstName: student?.FirstName || '',
+                LastName: student?.LastName || ''
               },
               Subject: {
-                SubjectName: subjectResult?.SubjectName || 'Unknown Subject'
+                SubjectName: subject?.SubjectName || 'Unknown Subject'
               }
             };
           } catch {
@@ -149,29 +172,30 @@ export async function GET() {
       console.log('Found attendance records:', attendanceRaw.length);
       console.log('Attendance records:', attendanceRaw);
 
-      // Get student and subject names for each attendance record
+      // Get student and subject names for each attendance record using proper Prisma relations
       attendance = await Promise.all(
-        attendanceRaw.map(async (att) => {          try {
-            const [studentResult, subjectResult] = await Promise.all([
-              prisma.$queryRaw`SELECT FirstName, LastName FROM person WHERE PersonID = ${att.StudentID}` as Promise<{ FirstName: string; LastName: string }[]>,
+        attendanceRaw.map(async (att) => {
+          try {
+            const [student, subject] = await Promise.all([
+              prisma.person.findUnique({ where: { PersonID: att.StudentID } }),
               prisma.subject.findUnique({ where: { SubjectID: att.SubjectID } })
             ]);
             
-            const studentName = studentResult[0] 
-              ? `${studentResult[0].FirstName} ${studentResult[0].LastName}` 
+            const studentName = student 
+              ? `${student.FirstName} ${student.LastName}` 
               : 'Unknown Student';
             
             return {
               ...att,
               StudentName: studentName,
-              SubjectName: subjectResult?.SubjectName || 'Unknown Subject',
+              SubjectName: subject?.SubjectName || 'Unknown Subject',
               Status: att.Status === 'PRESENT' ? 'Present' : 'Absent',
               Student: {
-                FirstName: studentResult[0]?.FirstName || '',
-                LastName: studentResult[0]?.LastName || ''
+                FirstName: student?.FirstName || '',
+                LastName: student?.LastName || ''
               },
               Subject: {
-                SubjectName: subjectResult?.SubjectName || 'Unknown Subject'
+                SubjectName: subject?.SubjectName || 'Unknown Subject'
               }
             };
           } catch {

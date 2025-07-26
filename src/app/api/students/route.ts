@@ -22,14 +22,14 @@ export async function GET() {
     const studentsWithNames = await Promise.all(
       students.map(async (student) => {
         try {
-          const person = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as any[];
+          const person = await prisma.person.findUnique({
+            where: { PersonID: student.AdmissionNumber }
+          });
           
           return {
             ...student,
-            FirstName: person[0]?.FirstName || '',
-            LastName: person[0]?.LastName || '',
+            FirstName: person?.FirstName || '',
+            LastName: person?.LastName || '',
             Class: student.Renamedclass
           };
         } catch (error) {

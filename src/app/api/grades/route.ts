@@ -58,19 +58,22 @@ export async function GET(request: NextRequest) {
       const allStudents = await prisma.student.findMany({});      // Transform grades to include proper student names from Person table
       const transformedGrades = await Promise.all(grades.map(async (grade) => {
         try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];          return {
+          const studentPerson = await prisma.person.findUnique({
+            where: { PersonID: grade.StudentID }
+          });
+          
+          return {
             ...grade,
             student: {
               AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
+              FirstName: studentPerson?.FirstName || '',
+              LastName: studentPerson?.LastName || '',
             },
             subject: {
               SubjectName: grade.subject.SubjectName
             }
-          };        } catch (error) {
+          };
+        } catch (error) {
           return {
             ...grade,
             student: {
@@ -86,14 +89,14 @@ export async function GET(request: NextRequest) {
       }));      // Transform students for dropdown - get names from Person table
       const transformedStudents = await Promise.all(allStudents.map(async (student) => {
         try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${student.AdmissionNumber}
-          ` as any[];
+          const studentPerson = await prisma.person.findUnique({
+            where: { PersonID: student.AdmissionNumber }
+          });
           
           return {
             AdmissionNumber: student.AdmissionNumber,
-            FirstName: studentPerson[0]?.FirstName || '',
-            LastName: studentPerson[0]?.LastName || '',
+            FirstName: studentPerson?.FirstName || '',
+            LastName: studentPerson?.LastName || '',
           };
         } catch (error) {
           return {
@@ -165,23 +168,22 @@ export async function GET(request: NextRequest) {
       });      // Transform grades to include student names from Person table
       const transformedGrades = await Promise.all(grades.map(async (grade) => {
         try {
-          const studentPerson = await prisma.$queryRaw`
-            SELECT FirstName, LastName FROM person WHERE PersonID = ${grade.StudentID}
-          ` as any[];
+          const studentPerson = await prisma.person.findUnique({
+            where: { PersonID: grade.StudentID }
+          });
 
-          const subjectInfo = await prisma.$queryRaw`
-            SELECT SubjectName FROM subject WHERE SubjectID = ${grade.SubjectID}
-          ` as any[];          return {
+          return {
             ...grade,
             student: {
               AdmissionNumber: grade.StudentID,
-              FirstName: studentPerson[0]?.FirstName || '',
-              LastName: studentPerson[0]?.LastName || '',
+              FirstName: studentPerson?.FirstName || '',
+              LastName: studentPerson?.LastName || '',
             },
             subject: {
-              SubjectName: subjectInfo[0]?.SubjectName || ''
+              SubjectName: grade.subject?.SubjectName || ''
             }
-          };        } catch (error) {
+          };
+        } catch (error) {
           return {
             ...grade,
             student: {

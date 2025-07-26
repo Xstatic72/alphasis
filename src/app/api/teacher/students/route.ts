@@ -40,20 +40,45 @@ export async function GET() {
           include: { Renamedclass: true }
         }
       }
-    });    // Get unique students
+    });    // Get unique students with their names from person table
     const studentsMap = new Map();
     registrations.forEach(reg => {
       if (reg.student && reg.student.AdmissionNumber && !studentsMap.has(reg.student.AdmissionNumber)) {
         studentsMap.set(reg.student.AdmissionNumber, reg.student);
       }
     });
-    const students = Array.from(studentsMap.values());
+    const studentsArray = Array.from(studentsMap.values());
+
+    // Get student names from person table
+    const studentsWithNames = await Promise.all(
+      studentsArray.map(async (student) => {
+        try {
+          const person = await prisma.person.findUnique({
+            where: { PersonID: student.AdmissionNumber }
+          });
+          
+          return {
+            ...student,
+            FirstName: person?.FirstName || '',
+            LastName: person?.LastName || '',
+            FullName: person ? `${person.FirstName} ${person.LastName}` : student.AdmissionNumber
+          };
+        } catch (error) {
+          return {
+            ...student,
+            FirstName: '',
+            LastName: '',
+            FullName: student.AdmissionNumber
+          };
+        }
+      })
+    );
 
     // Get all classes
     const classes = await prisma.renamedclass.findMany();
 
     return NextResponse.json({
-      students: students || [],
+      students: studentsWithNames || [],
       classes: classes || []
     });
 
